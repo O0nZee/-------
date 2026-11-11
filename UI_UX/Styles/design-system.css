@@ -1,0 +1,98 @@
+/* ==========================================================================
+   UI/UX DESIGN SYSTEM - GRADUATION PLATFORM
+   Contains: CSS Variables, Typography, Spacing, and Global Reset
+   Modify this file to change the core look & feel, brand colors, and font styles.
+   ========================================================================== */
+
+:root {
+    /* Brand Colors */
+    --color-primary: #1e40af;       /* Navy Blue Primary */
+    --color-primary-light: #3b82f6; /* Accent Blue */
+    --color-primary-dark: #1e3a8a;  /* Deep Navy */
+    --color-secondary: #0f766e;     /* Teal */
+    --color-accent: #f59e0b;        /* Amber */
+    --color-success: #10b981;       /* Emerald Green */
+    --color-danger: #ef4444;        /* Crimson Red */
+    --color-warning: #f59e0b;       /* Amber Warning */
+
+    /* Neutral Background & Surface Colors */
+    --color-bg: #f8fafc;
+    --color-surface: #ffffff;
+    --color-surface-muted: #f1f5f9;
+    --color-sidebar: #0f172a;       /* Dark Slate */
+
+    /* Typography Colors */
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --text-inverse: #ffffff;
+
+    /* Border & Divider Colors */
+    --border-color: #e2e8f0;
+    --border-light: #f1f5f9;
+    --border-dark: #cbd5e1;
+
+    /* Elevation & Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-full: 9999px;
+
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+}
+
+/* Global Reset & Base Typography */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+    background-color: var(--color-bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    direction: rtl;
+    line-height: 1.6;
+}
+
+/* Layout Containers */
+.app-container {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    flex: 1;
+    width: 100%;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.grid-4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}

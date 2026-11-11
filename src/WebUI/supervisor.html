@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة المشرفين الأكاديميين | Supervisor Web App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/api.js"></script>
+    <style>
+        .doctor-header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: var(--shadow);
+        }
+        .doctor-avatar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .avatar-circle-doc {
+            width: 58px;
+            height: 58px;
+            background: #fef3c7;
+            color: #b45309;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="brand">
+                <div class="brand-icon">👨‍🏫</div>
+                <div class="brand-text">
+                    <h1>بوابة المشرفين الأكاديميين</h1>
+                    <p>Supervisor Portal & Team Monitoring</p>
+                </div>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">الرئيسية</a></li>
+                <li><a href="student.html" class="nav-link">بوابة الطلاب</a></li>
+                <li><a href="supervisor.html" class="nav-link active">بوابتي</a></li>
+                <li><a href="admin.html" class="nav-link">الداش بورد</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="main-wrapper">
+        <!-- Supervisor Info Header -->
+        <div class="doctor-header">
+            <div class="doctor-avatar">
+                <div class="avatar-circle-doc">د.م</div>
+                <div>
+                    <h2 style="font-size: 1.3rem; font-weight: 800; color: #1e3a8a;">د. مصطفى كامل (Dr. Mostafa Kamel)</h2>
+                    <p style="font-size: 0.88rem; color: var(--text-muted);">
+                        أستاذ مساعد | قسم علوم الحاسب | التخصص: إنترنت الأشياء والأنظمة الذكية
+                    </p>
+                </div>
+            </div>
+            <div style="background: #f8fafc; padding: 0.8rem 1.2rem; border-radius: 8px; border: 1px solid var(--border); text-align: center;">
+                <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">كوتة الإشراف الأكاديمي:</span>
+                <div style="font-size: 1.2rem; font-weight: 800; color: var(--primary);">1 / 3 فرق مشرفة</div>
+                <div class="progress-container" style="width: 140px; height: 8px; margin-top: 0.3rem;">
+                    <div class="progress-bar" style="width: 33.3%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 1: Pending Idea Reviews -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <div class="card-header">
+                <span class="card-title">📥 صندوق مراجعة واعتماد أفكار المشروعات</span>
+                <span class="badge badge-supervisor">Member 2</span>
+            </div>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+                يمكنك هنا فحص مقترحات الأفكار الجديدة المقدمة من الطلاب، الاطلاع على تقرير فحص التشابه بالذكاء الاصطناعي، واعتماد الفكرة أو طلب تعديلها.
+            </p>
+
+            <!-- Idea Review Box -->
+            <div style="border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; background: #fafafa; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <h3 style="font-size: 1.15rem; color: #1e3a8a; font-weight: 700;">
+                            Smart IoT Microgrid Energy Optimization for Campus
+                        </h3>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">
+                            المقدم: <strong>أحمد منصور</strong> (قائد فريق EnergyGrid) | المسار: إنترنت الأشياء (IoT)
+                        </span>
+                    </div>
+                    <span class="badge badge-approved" id="currentIdeaStatus">معتمد من المشرف ✓</span>
+                </div>
+
+                <p style="font-size: 0.92rem; line-height: 1.6; color: #334155; margin-bottom: 1rem;">
+                    <strong>وصف الفكرة:</strong> نشر حساسات طاقة ذكية تعتمد بروتوكول LoRaWAN اللاسلكي، مع تدريب نماذج تعلم عميق (LSTM) للتنبؤ بالأحمال الكهربائية وترشيد الاستهلاك ديناميكياً بمباني الحرم الجامعي.
+                </p>
+
+                <!-- AI Report Snapshot -->
+                <div style="background: white; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1.2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 700; font-size: 0.88rem; color: #047857;">
+                            🤖 نتيجة فحص التشابه بالذكاء الاصطناعي (AI Similarity Report):
+                        </span>
+                        <span class="badge badge-approved">فكرة مبتكرة (تشابه 14.2% فقط)</span>
+                    </div>
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.3rem;">
+                        المحرك يؤكد عدم وجود أي تطابق أو نسخ مع مشروعات تخرج الأعوام السابقة بالأرشيف.
+                    </p>
+                </div>
+
+                <!-- Review Action Form -->
+                <div class="form-group">
+                    <label>ملاحظات وتوجيهات المشرف الأكاديمي (Supervisor Feedback):</label>
+                    <textarea id="docNotes" class="form-control" rows="2">فكرة ممتازة ومبتكرة جداً، تلبي معايير ترشيد الطاقة والاستدامة بالحرم الجامعي. تم الاعتماد والموافقة على الانتقال للمرحلة الثانية.</textarea>
+                </div>
+
+                <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
+                    <button class="btn btn-success" onclick="decideIdea('Approved')">اعتماد الفكرة رسمياً (Approve)</button>
+                    <button class="btn" style="background: var(--accent);" onclick="decideIdea('ModificationRequested')">طلب تعديلات من الطلاب (Request Edits)</button>
+                    <button class="btn btn-danger" onclick="decideIdea('Rejected')">رفض الفكرة (Reject)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Supervised Teams & Progress Tracking -->
+        <div class="grid-2">
+            <!-- Supervised Teams Roster -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">👥 الفرق تحت إشرافي (Supervised Teams)</span>
+                    <span class="badge badge-student">1 فريق نشط</span>
+                </div>
+                <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; background: #f8fafc;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                        <h4 style="font-size: 1.05rem; color: #1e3a8a;">فريق رواد الطاقة الذكية (EnergyGrid)</h4>
+                        <span class="badge badge-approved">المرحلة 2</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.8rem;">
+                        المشروع: <strong>Smart IoT Microgrid Energy Optimization</strong>
+                    </p>
+
+                    <div style="font-size: 0.85rem; margin-bottom: 1rem;">
+                        <strong>أعضاء الفريق:</strong><br>
+                        • أحمد منصور (قائد الفريق - ST-101)<br>
+                        • كريم نبيل (مهندس أجهزة مدمجة - ST-102)<br>
+                        • منى شوقي (مهندسة ذكاء اصطناعي - ST-103)
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.3rem;">
+                        <span>نسبة الإنجاز الكلية:</span>
+                        <strong>50.0%</strong>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: 50%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monitoring & Alerts -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">⚠️ متابعة المواعيد والإنذارات (Alerts)</span>
+                    <span class="badge badge-admin">متابعة دقيقة</span>
+                </div>
+                <div class="alert alert-danger" style="margin-bottom: 0.8rem;">
+                    <div>
+                        <strong>تأخر في التسليم:</strong> مهمة تقرير منتصف الفصل لفريق EnergyGrid متأخرة 4 أيام!
+                    </div>
+                </div>
+                <div class="alert alert-warning" style="margin-bottom: 1rem;">
+                    <div>
+                        <strong>موعد قادم:</strong> موعد تسليم دوائر الحساسات محدد بعد 3 أيام.
+                    </div>
+                </div>
+                <button class="btn btn-outline" style="width: 100%;" onclick="sendReminderNotification()">
+                    ✉️ إرسال تذكير وإشعار لأعضاء الفريق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        بوابة المشرفين الأكاديميين - منصة مشروعات التخرج الموحدة &copy; 2026
+    </footer>
+
+    <script>
+        function decideIdea(decision) {
+            const notes = document.getElementById('docNotes').value;
+            const badge = document.getElementById('currentIdeaStatus');
+
+            if(decision === 'Approved') {
+                badge.className = 'badge badge-approved';
+                badge.innerText = 'معتمد رسمياً ✓';
+                alert('تم اعتماد فكرة المشروع رسمياً وإخطار الطلاب لبدء العمل في المراحل التنفيذية!');
+            } else if(decision === 'ModificationRequested') {
+                badge.className = 'badge badge-supervisor';
+                badge.innerText = 'مطلوب تعديلات';
+                alert('تم إرسال طلب التعديلات مع الملاحظات إلى الطلاب.');
+            } else {
+                badge.className = 'badge badge-admin';
+                badge.innerText = 'مرفوض';
+                alert('تم رفض الفكرة وإتاحة الفرصة للطلاب لتقديم مقترح بديل.');
+            }
+        }
+
+        function sendReminderNotification() {
+            alert('تم إرسال إشعار تذكير فوري إلى جميع أعضاء الفريق عبر المنصة والبريد الجامعي بنجاح!');
+        }
+    </script>
+</body>
+</html>

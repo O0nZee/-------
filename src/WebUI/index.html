@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة مشروعات التخرج الموحدة | الرئيسية وتسجيل الدخول</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+            border-radius: 16px;
+            margin-bottom: 3rem;
+            box-shadow: var(--shadow-lg);
+        }
+        .hero h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: 1rem; }
+        .hero p { font-size: 1.15rem; max-width: 800px; margin: 0 auto 2rem; opacity: 0.9; line-height: 1.8; }
+        .role-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        .role-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 2.2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .role-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-lg);
+        }
+        .role-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+        .role-card h3 { font-size: 1.4rem; color: var(--primary-dark); margin-bottom: 0.8rem; }
+        .role-card p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; flex: 1; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="brand">
+                <div class="brand-icon">🎓</div>
+                <div class="brand-text">
+                    <h1>منصة مشروعات التخرج الموحدة</h1>
+                    <p>Graduation Project Web Platform & AI Engine</p>
+                </div>
+            </a>
+            <ul class="nav-links">
+                <li><a href="student.html" class="nav-link">بوابة الطلاب (Web)</a></li>
+                <li><a href="supervisor.html" class="nav-link">بوابة المشرفين (Web)</a></li>
+                <li><a href="admin.html" class="nav-link">لوحة الإدارة والتقارير (الداش بورد)</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="main-wrapper">
+        <div class="hero">
+            <h1>منصة إلكترونية متكاملة لمشروعات التخرج</h1>
+            <p>
+                نظام ويب موحد يخدم الطلاب، المشرفين الأكاديميين، وإدارة الكلية. يقدم حلولاً ذكية لتقديم واعتماد الأفكار، كشف التشابه بالذكاء الاصطناعي، إدارة الفرق، ومتابعة لوحات المهام والمراحل.
+            </p>
+            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <a href="student.html" class="btn" style="background: white; color: var(--primary-dark); font-weight: 800;">دخول كطالب (Student Portal)</a>
+                <a href="supervisor.html" class="btn" style="background: rgba(255,255,255,0.2); border: 1px solid white;">دخول كمشرف (Supervisor Portal)</a>
+                <a href="admin.html" class="btn btn-success" style="font-weight: 800;">فتح الداش بورد (Admin Dashboard)</a>
+            </div>
+        </div>
+
+        <h2 style="text-align: center; margin-bottom: 2rem; font-size: 1.8rem; font-weight: 800; color: #1e3a8a;">
+            اختر البوابة للدخول إلى النظام:
+        </h2>
+
+        <div class="role-cards">
+            <!-- Student Web App -->
+            <div class="role-card">
+                <div>
+                    <span class="role-icon">👨‍🎓</span>
+                    <h3>بوابة الطلاب (Student Web App)</h3>
+                    <p>
+                        تقديم أفكار المشروعات الجديدة، فحص التشابه الفوري بالذكاء الاصطناعي لتجنب التكرار غير المقصود، تكوين الفرق وإرسال الدعوات، ومتابعة لوحة المهام (Kanban Board).
+                    </p>
+                </div>
+                <a href="student.html" class="btn" style="width: 100%;">فتح بوابة الطلاب &larr;</a>
+            </div>
+
+            <!-- Supervisor Web App -->
+            <div class="role-card">
+                <div>
+                    <span class="role-icon">👨‍🏫</span>
+                    <h3>بوابة المشرفين (Supervisor Web App)</h3>
+                    <p>
+                        مراجعة الأفكار المقدمة من الفرق واعتمادها أو طلب تعديلات مع الملاحظات، استعراض الفرق المسندة للأستاذ، ومتابعة نسب الإنجاز والمراحل والإنذارات التلقائية.
+                    </p>
+                </div>
+                <a href="supervisor.html" class="btn" style="width: 100%; background: #0f766e;">فتح بوابة المشرفين &larr;</a>
+            </div>
+
+            <!-- Admin Dashboard -->
+            <div class="role-card" style="border-color: #2563eb; background: #f8fafc;">
+                <div>
+                    <span class="role-icon">📊</span>
+                    <h3 style="color: #1e40af;">الداش بورد (Admin Dashboard)</h3>
+                    <p>
+                        لوحة التحكم المركزية لإدارة الكلية: استعراض إحصائيات المشروعات، ضبط كوتة وتوزيع المشرفين على الفرق، إدارة المستخدمين، واستخراج تقارير الأداء الشاملة.
+                    </p>
+                </div>
+                <a href="admin.html" class="btn btn-success" style="width: 100%;">فتح لوحة التحكم (الداش بورد) &larr;</a>
+            </div>
+        </div>
+
+        <!-- Project Overview Box -->
+        <div class="card" style="margin-top: 2rem;">
+            <div class="card-header">
+                <span class="card-title">📌 الموديولات المنجزة وفق تقسيم الـ 8 أفراد:</span>
+                <span class="badge badge-approved">35/35 اختبار نجاح (100%)</span>
+            </div>
+            <div class="grid-4" style="margin-bottom: 0;">
+                <div style="padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                    <strong>01. إدارة المستخدمين</strong>
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.4rem;">تسجيل، دخول، تشفير SHA256، وصلاحيات RBAC متقدمة.</p>
+                </div>
+                <div style="padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                    <strong>02. الأفكار والذكاء الاصطناعي</strong>
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.4rem;">تقديم الأفكار وكشف تشابه النصوص Cosine Similarity لمنع السرقة والتكرار.</p>
+                </div>
+                <div style="padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                    <strong>03. الفرق وتوزيع المشرفين</strong>
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.4rem;">تكوين الفرق، الدعوات، وضبط كوتة الإشراف الأكاديمي (حد أقصى 3 فرق).</p>
+                </div>
+                <div style="padding: 1rem; background: #f8fafc; border-radius: 8px;">
+                    <strong>04. لوحة المهام والمتابعة</strong>
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.4rem;">لوحة Kanban ثلاثية، حساب نسبة الإنجاز والإنذارات التلقائية للمواعيد.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        منصة مشروعات التخرج الموحدة &copy; 2026 - مبنية بـ C# و Clean Architecture وواجهات Web تفاعلية
+    </footer>
+
+</body>
+</html>

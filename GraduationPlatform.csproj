@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net8.0;net48</TargetFrameworks>
+    <RootNamespace>GraduationPlatform</RootNamespace>
+    <AssemblyName>GraduationPlatform</AssemblyName>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <StartupObject>GraduationPlatform.Backend.ApiControllers.ApiServer</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Backend\**\*.cs" />
+  </ItemGroup>
+
+</Project>

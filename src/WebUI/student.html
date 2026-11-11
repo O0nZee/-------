@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة الطلاب | Graduation Student Web App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/api.js"></script>
+    <style>
+        .student-header {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: var(--shadow);
+        }
+        .student-avatar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .avatar-circle {
+            width: 58px;
+            height: 58px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+        .tabs-nav {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 0.85rem 1.4rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .tab-pane {
+            display: none;
+        }
+        .tab-pane.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="brand">
+                <div class="brand-icon">👨‍🎓</div>
+                <div class="brand-text">
+                    <h1>بوابة الطلاب الإلكترونية</h1>
+                    <p>Student Graduation Portal</p>
+                </div>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">الرئيسية</a></li>
+                <li><a href="student.html" class="nav-link active">بوابتي</a></li>
+                <li><a href="supervisor.html" class="nav-link">بوابة المشرفين</a></li>
+                <li><a href="admin.html" class="nav-link">الداش بورد</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="main-wrapper">
+        <!-- Student Info Header -->
+        <div class="student-header">
+            <div class="student-avatar">
+                <div class="avatar-circle">أم</div>
+                <div>
+                    <h2 style="font-size: 1.3rem; font-weight: 800; color: #1e3a8a;">أحمد منصور محمود (Ahmed Mansour)</h2>
+                    <p style="font-size: 0.88rem; color: var(--text-muted);">
+                        الفرقة الرابعة | قسم علوم الحاسب | رقم القيد: <strong>ST-2026-101</strong>
+                    </p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 0.8rem; align-items: center;">
+                <span class="badge badge-student" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">فريق: EnergyGrid Pioneers</span>
+                <span class="badge badge-approved" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">المشروع معتمد ✓</span>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" onclick="showTab('tab-ideas')">💡 فكرة المشروع وفحص الذكاء الاصطناعي</button>
+            <button class="tab-btn" onclick="showTab('tab-team')">👥 فريقي والدعوات</button>
+            <button class="tab-btn" onclick="showTab('tab-kanban')">📋 لوحة المهام (Kanban Board)</button>
+            <button class="tab-btn" onclick="showTab('tab-timeline')">📈 الخط الزمني والمراحل</button>
+        </div>
+
+        <!-- TAB 1: Project Ideas & AI Checker -->
+        <div id="tab-ideas" class="tab-pane active">
+            <div class="grid-2">
+                <!-- Submit Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">تقديم مقترح مشروع جديد</span>
+                        <span class="badge badge-student">Member 2</span>
+                    </div>
+                    <form onsubmit="submitIdea(event)">
+                        <div class="form-group">
+                            <label>عنوان المشروع (Project Title):</label>
+                            <input type="text" id="ideaInputTitle" class="form-control" required 
+                                   value="Smart IoT Microgrid Energy Optimization for Campus" 
+                                   oninput="runLiveSimilarityCheck()">
+                        </div>
+                        <div class="form-group">
+                            <label>وصف المشروع والمشكلة التي يعالجها:</label>
+                            <textarea id="ideaInputDesc" class="form-control" rows="4" required 
+                                      oninput="runLiveSimilarityCheck()">Deploying LoRaWAN power sensors and AI predictive models to dynamically balance energy loads across campus buildings.</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>المسار التخصصي (Track):</label>
+                            <select id="ideaTrack" class="form-control">
+                                <option>IoT & Smart Systems (إنترنت الأشياء والأنظمة الذكية)</option>
+                                <option>AI & Computer Vision (الذكاء الاصطناعي ورؤية الحاسب)</option>
+                                <option>Cybersecurity & Blockchain (الأمن السيبراني والبلوك تشين)</option>
+                                <option>Cloud & Web Platforms (الحوسبة السحابية والويب)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>التقنيات المقترحة (Tech Stack):</label>
+                            <input type="text" id="ideaTech" class="form-control" value="Python, FastAPI, PyTorch, LoRaWAN, React">
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%;">إرسال الفكرة للاعتماد الأكاديمي</button>
+                    </form>
+                </div>
+
+                <!-- AI Plagiarism & Similarity Report -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">🤖 محرك فحص التشابه والسرقة الأدبية (AI Engine)</span>
+                        <span id="aiRiskBadge" class="badge badge-approved">فحص تلقائي نشط</span>
+                    </div>
+                    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        يقوم المحرك بتحليل نصوص العنوان والوصف والتقنيات ومقارنتها عبر متجهات <strong dir="ltr">Cosine Similarity</strong> مع مشروعات السنوات السابقة لاكتشاف أي تكرار غير مقصود.
+                    </p>
+
+                    <!-- Results Box -->
+                    <div id="aiResultBox">
+                        <!-- Filled by JS -->
+                    </div>
+
+                    <!-- Suggestions from Archive -->
+                    <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.6rem; color: #1e3a8a;">
+                            📚 مشروعات سابقة ذات صلة مقترحة من الأرشيف:
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem;">
+                            <div style="padding: 0.6rem; background: #f8fafc; border-radius: 6px; border: 1px solid var(--border);">
+                                <strong>Autonomous Mobile Delivery Robot for Campus</strong> (2023-2024)<br>
+                                <span style="color: var(--text-muted);">المشرف: د. خالد سامي | التقدير: A</span>
+                            </div>
+                            <div style="padding: 0.6rem; background: #f8fafc; border-radius: 6px; border: 1px solid var(--border);">
+                                <strong>Smart Attendance System using Facial Recognition</strong> (2023-2024)<br>
+                                <span style="color: var(--text-muted);">المشرف: أ.د. محمد عبد الرحمن | التقدير: A+</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Team & Invitations -->
+        <div id="tab-team" class="tab-pane">
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">أعضاء الفريق (Team Roster)</span>
+                        <span class="badge badge-student">السعة: 3 / 4 طلاب</span>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1.15rem; color: #1e3a8a; margin-bottom: 0.4rem;">فريق رواد الطاقة الذكية (EnergyGrid Pioneers)</h3>
+                        <p style="font-size: 0.88rem; color: var(--text-muted);">
+                            المشرف الأكاديمي المسند: <strong>د. مصطفى كامل</strong> (قسم علوم الحاسب)
+                        </p>
+                    </div>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>اسم الطالب</th>
+                                <th>الدور في الفريق</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>أحمد منصور</strong> (ST-101)</td>
+                                <td><span class="badge badge-student">👑 قائد الفريق (Leader)</span></td>
+                                <td><span style="color: var(--success); font-weight: 700;">نشط</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>كريم نبيل</strong> (ST-102)</td>
+                                <td>مهندس أجهزة مدمجة وإنترنت الأشياء</td>
+                                <td><span style="color: var(--success); font-weight: 700;">نشط</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>منى شوقي</strong> (ST-103)</td>
+                                <td>مهندسة الذكاء الاصطناعي وتعلم الآلة</td>
+                                <td><span style="color: var(--success); font-weight: 700;">نشط</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">إرسال دعوة انضمام لطالب زميل</span>
+                        <span class="badge badge-student">Member 3</span>
+                    </div>
+                    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.2rem;">
+                        يمكن لقائد الفريق إرسال دعوة لطالب غير مسجل بفريق آخر حتى يكتمل الحد الأقصى (4 طلاب).
+                    </p>
+                    <div class="form-group">
+                        <label>البريد الإلكتروني الجامعي للطالب المدعو:</label>
+                        <input type="email" id="inviteEmail" class="form-control" placeholder="colleague@alexu.edu.eg">
+                    </div>
+                    <div class="form-group">
+                        <label>الدور المقترح في المشروع:</label>
+                        <select id="inviteRole" class="form-control">
+                            <option>مهندس واجهات أمامية (Frontend Developer)</option>
+                            <option>مهندس قواعد بيانات وسحابية (Cloud & DB)</option>
+                            <option>مهندس جودة واختبار (QA & Testing Engineer)</option>
+                        </select>
+                    </div>
+                    <button class="btn" style="width: 100%;" onclick="sendTeamInvite()">إرسال الدعوة الرسمية</button>
+
+                    <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                        <span style="font-size: 0.85rem; font-weight: 700; color: #475569;">سجل الدعوات المرسلة:</span>
+                        <div style="padding: 0.6rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; margin-top: 0.5rem; font-size: 0.82rem;">
+                            ⏳ تم إرسال دعوة للطالب: <strong>tarek.zaki@alexu.edu.eg</strong> (بانتظار الموافقة)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: Interactive Kanban Board -->
+        <div id="tab-kanban" class="tab-pane">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h2 style="font-size: 1.3rem; font-weight: 800; color: #1e3a8a;">لوحة متابعة المهام (Kanban Task Board)</h2>
+                    <p style="font-size: 0.88rem; color: var(--text-muted);">اضغط على أزرار النقل لتحديث حالة المهمة بين الأعمدة وتحديث نسبة إنجاز المشروع فورياً.</p>
+                </div>
+                <button class="btn btn-sm" onclick="addNewTaskPrompt()">+ إضافة مهمة جديدة</button>
+            </div>
+
+            <div class="kanban-board">
+                <!-- Column: To Do -->
+                <div class="kanban-column">
+                    <div class="kanban-header">
+                        <h3>قيد الانتظار (To Do)</h3>
+                        <span class="badge badge-student" id="todoCount">1</span>
+                    </div>
+                    <div class="kanban-cards" id="todoCards">
+                        <div class="kanban-card">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+                                <strong style="font-size: 0.95rem;">تدريب نموذج التنبؤ بالأحمال الكهربائية (LSTM)</strong>
+                                <span class="badge badge-admin">Urgent</span>
+                            </div>
+                            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.8rem;">تدريب شبكة LSTM على بيانات الاستهلاك الكهربائي للحرم الجامعي.</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>المسؤول: <strong>منى شوقي</strong></span>
+                                <button class="btn btn-sm" onclick="moveTask('task_4', 'InProgress')">بدء العمل &larr;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column: In Progress -->
+                <div class="kanban-column">
+                    <div class="kanban-header">
+                        <h3>جاري العمل عليها (In Progress)</h3>
+                        <span class="badge badge-supervisor" id="inProgCount">1</span>
+                    </div>
+                    <div class="kanban-cards" id="inProgCards">
+                        <div class="kanban-card in-progress">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+                                <strong style="font-size: 0.95rem;">تصميم دوائر حساسات الطاقة وتوصيل ESP32</strong>
+                                <span class="badge badge-supervisor">High</span>
+                            </div>
+                            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.8rem;">توصيل حساسات التيار والجهد ببروتوكول LoRaWAN اللاسلكي.</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                                <span>المسؤول: <strong>كريم نبيل</strong></span>
+                                <button class="btn btn-sm btn-success" onclick="moveTask('task_3', 'Completed')">إكمال المهمة ✓</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column: Completed -->
+                <div class="kanban-column">
+                    <div class="kanban-header">
+                        <h3>المكتملة بنجاح (Completed)</h3>
+                        <span class="badge badge-approved" id="completedCount">2</span>
+                    </div>
+                    <div class="kanban-cards" id="completedCards">
+                        <div class="kanban-card completed">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+                                <strong style="font-size: 0.95rem;">إعداد وثيقة توصيف المتطلبات (SRS Document)</strong>
+                                <span class="badge badge-approved">Completed</span>
+                            </div>
+                            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.8rem;">تم تسليم وثيقة المتطلبات للمشرف الأكاديمي واعتمادها رسمياً.</p>
+                            <div style="font-size: 0.8rem; color: var(--success); font-weight: 700;">
+                                ✓ منجزة بواسطة: أحمد منصور
+                            </div>
+                        </div>
+                        <div class="kanban-card completed">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
+                                <strong style="font-size: 0.95rem;">مراجعة وحصر الأبحاث السابقة (Literature Review)</strong>
+                                <span class="badge badge-approved">Completed</span>
+                            </div>
+                            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.8rem;">حصر وتلخيص 18 ورقة بحثية في IEEE حول smart campus microgrids.</p>
+                            <div style="font-size: 0.8rem; color: var(--success); font-weight: 700;">
+                                ✓ منجزة بواسطة: أحمد منصور
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: Timeline & Milestones -->
+        <div id="tab-timeline" class="tab-pane">
+            <div class="card" style="margin-bottom: 2rem;">
+                <div class="card-header">
+                    <span class="card-title">مؤشر الإنجاز الكلي للمشروع (Overall Progress)</span>
+                    <span class="badge badge-approved" id="progressBadge" style="font-size: 0.95rem;">50.0% منجز</span>
+                </div>
+                <div class="progress-container" style="height: 18px;">
+                    <div class="progress-bar" id="progressBar" style="width: 50%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--text-muted); margin-top: 0.6rem;">
+                    <span>المرحلة النشطة: <strong>المرحلة 2 (التصميم المعماري وقواعد البيانات)</strong></span>
+                    <span>المهام المنجزة: <strong id="progressStats">2 من أصل 4 مهام</strong></span>
+                </div>
+            </div>
+
+            <!-- Deadlines & Milestones Grid -->
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">إنذارات وتنبيهات المواعيد (Deadline Alerts)</span>
+                        <span class="badge badge-admin">نظام الإنذار الآلي</span>
+                    </div>
+                    <div class="alert alert-danger">
+                        ⚠️ <strong>إنذار موعد متأخر:</strong> تسليم تقرير منتصف الفصل الأكاديمي متأخر بمقدار 4 أيام!
+                    </div>
+                    <div class="alert alert-warning">
+                        ⏰ <strong>تنبيه موعد قادم:</strong> مناقشة المرحلة الثانية محددة بعد 3 أيام (20 نوفمبر).
+                    </div>
+                    <div class="alert alert-success">
+                        ✅ <strong>تم الاعتماد:</strong> تم تسليم تقرير المرحلة الأولى للمشرف في الموعد المحدد.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">مراحل مشروع التخرج القياسية (Milestones)</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        <div style="padding: 0.8rem; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px;">
+                            <strong> المرحلة 1: المقترح وتوصيف المتطلبات (SRS)</strong>
+                            <span class="badge badge-approved" style="float: left;">✓ مكتملة</span>
+                        </div>
+                        <div style="padding: 0.8rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;">
+                            <strong> المرحلة 2: التصميم المعماري وقواعد البيانات</strong>
+                            <span class="badge badge-supervisor" style="float: left;">جاري العمل</span>
+                        </div>
+                        <div style="padding: 0.8rem; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; opacity: 0.7;">
+                            <strong> المرحلة 3: التطوير والبرمجة والتكامل (Implementation)</strong>
+                            <span class="badge badge-student" style="float: left;">قادمة</span>
+                        </div>
+                        <div style="padding: 0.8rem; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; opacity: 0.7;">
+                            <strong> المرحلة 4: الاختبارات والتوثيق والمناقشة النهائية</strong>
+                            <span class="badge badge-student" style="float: left;">قادمة</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        بوابة الطلاب - منصة مشروعات التخرج الموحدة &copy; 2026
+    </footer>
+
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function runLiveSimilarityCheck() {
+            const title = document.getElementById('ideaInputTitle').value;
+            const desc = document.getElementById('ideaInputDesc').value;
+            const tech = document.getElementById('ideaTech').value;
+            const results = checkPlagiarismAndSimilarity(title, desc, tech);
+            const box = document.getElementById('aiResultBox');
+            const badge = document.getElementById('aiRiskBadge');
+
+            if (results.length > 0) {
+                const top = results[0];
+                const pct = (top.score * 100).toFixed(1);
+
+                if (top.risk === "High") {
+                    badge.className = "badge badge-admin";
+                    badge.innerText = `تحذير سرقة أدبية (${pct}%)!`;
+                    box.innerHTML = `
+                        <div style="background: #fef2f2; border: 2px solid #ef4444; border-radius: 8px; padding: 1rem;">
+                            <strong style="color: #991b1b; font-size: 1rem;">⚠️ تم اكتشاف تشابه مرتفع جداً مع مشروع بأرشيف الكلية!</strong>
+                            <p style="font-size: 0.85rem; margin-top: 0.5rem; line-height: 1.6;">
+                                <strong>المشروع المطابق:</strong> ${top.matchedTitle} (${top.matchedYear})<br>
+                                <strong>نسبة التطابق الرياضي:</strong> <span style="font-size: 1.1rem; font-weight: 800; color: #b91c1c;">${pct}%</span><br>
+                                <strong>المصطلحات المشتركة:</strong> ${top.overlap.join(", ")}<br>
+                                <strong>توجيه النظام:</strong> ${top.recommendation}
+                            </p>
+                        </div>
+                    `;
+                } else if (top.risk === "Moderate") {
+                    badge.className = "badge badge-supervisor";
+                    badge.innerText = `تشابه جزئي (${pct}%)`;
+                    box.innerHTML = `
+                        <div style="background: #fffbeb; border: 1px solid #f59e0b; border-radius: 8px; padding: 1rem;">
+                            <strong style="color: #b45309;">⚠️ تشابه جزئي مع مشروع سابق (${top.matchedTitle})</strong>
+                            <p style="font-size: 0.85rem; margin-top: 0.4rem;">
+                                نسبة التشابه: ${pct}% - يرجى توضيح الفرق الجوهري والإضافة الجديدة.
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    renderNovelIdeaBox(box, badge);
+                }
+            } else {
+                renderNovelIdeaBox(box, badge);
+            }
+        }
+
+        function renderNovelIdeaBox(box, badge) {
+            badge.className = "badge badge-approved";
+            badge.innerText = "فكرة مبتكرة (تشابه منخفض جداً)";
+            box.innerHTML = `
+                <div style="background: #ecfdf5; border: 1px solid #10b981; border-radius: 8px; padding: 1rem;">
+                    <strong style="color: #047857; font-size: 0.95rem;">✅ الفكرة مبتكرة ومميزة!</strong>
+                    <p style="font-size: 0.85rem; color: #065f46; margin-top: 0.4rem;">
+                        أكد محرك الذكاء الاصطناعي أن الفكرة خالية من أي نسخ أو تكرار غير مقصود من المشروعات السابقة. جاهزة للاعتماد الرسمي.
+                    </p>
+                </div>
+            `;
+        }
+
+        function submitIdea(e) {
+            e.preventDefault();
+            alert("تم إرسال فكرة المشروع بنجاح إلى المشرف الأكاديمي د. مصطفى كامل للاعتماد!");
+        }
+
+        function sendTeamInvite() {
+            const email = document.getElementById('inviteEmail').value;
+            if(!email) { alert("يرجى إدخال البريد الجامعي للطالب"); return; }
+            alert("تم إرسال دعوة الانضمام الرسمية بنجاح إلى: " + email);
+            document.getElementById('inviteEmail').value = "";
+        }
+
+        function moveTask(taskId, newStatus) {
+            alert("تم تحديث حالة المهمة بنجاح إلى: " + newStatus);
+            // Dynamic update calculation
+            const bar = document.getElementById('progressBar');
+            const badge = document.getElementById('progressBadge');
+            const stats = document.getElementById('progressStats');
+            bar.style.width = "75%";
+            badge.innerText = "75.0% منجز";
+            stats.innerText = "3 من أصل 4 مهام";
+        }
+
+        function addNewTaskPrompt() {
+            const title = prompt("أدخل عنوان المهمة الجديدة:");
+            if(title) {
+                alert("تم إضافة المهمة بنجاح إلى لوحة المهام (To Do).");
+            }
+        }
+
+        // Initialize AI check on load
+        window.addEventListener('DOMContentLoaded', runLiveSimilarityCheck);
+    </script>
+</body>
+</html>

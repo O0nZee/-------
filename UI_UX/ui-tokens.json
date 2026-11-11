@@ -1,0 +1,27 @@
+{
+  "themeName": "Graduation Platform Academic Theme",
+  "version": "2.0.0",
+  "direction": "rtl",
+  "typography": {
+    "fontFamily": "Cairo, -apple-system, sans-serif",
+    "baseFontSize": "16px",
+    "headingWeight": 800,
+    "bodyWeight": 600
+  },
+  "colors": {
+    "primary": "#1e40af",
+    "primaryDark": "#1e3a8a",
+    "accent": "#f59e0b",
+    "success": "#10b981",
+    "danger": "#ef4444",
+    "background": "#f8fafc",
+    "surface": "#ffffff",
+    "sidebar": "#0f172a"
+  },
+  "rules": {
+    "supervisorMaxTeams": 3,
+    "teamMaxMembers": 4,
+    "similarityThresholdHighRisk": 0.70,
+    "similarityThresholdModerate": 0.40
+  }
+}
