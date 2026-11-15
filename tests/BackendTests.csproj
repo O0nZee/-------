@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems><ImplicitUsings>enable</ImplicitUsings>
+    <StartupObject>GraduationPlatform.Tests.MasterTestRunner</StartupObject>
+    <OutputPath Condition="'$(BackendTestBuild)' == 'true'">$(MSBuildProjectDirectory)\.runtime\build\BackendTests\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../GraduationPlatform.csproj" />
+    <Compile Include="Member1_Tests.cs;Member2_Tests.cs;Member3_Tests.cs;Member4_Tests.cs;Integration_Tests.cs;TestRunner.cs;BackendRegressionTests.cs" />
+  </ItemGroup>
+</Project>

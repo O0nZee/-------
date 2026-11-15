@@ -4,10 +4,11 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using GraduationPlatform.Common;
+using GraduationPlatform.SupervisorManagement;
 
 namespace GraduationPlatform.Member1_UserManagement
 {
-    public class AuthService : IAuthService
+    public partial class AuthService : IAuthService
     {
         private readonly Dictionary<string, User> _usersById = new Dictionary<string, User>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _userIdByUsername = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -42,6 +43,7 @@ namespace GraduationPlatform.Member1_UserManagement
 
             AddPermission(new Permission("user.manage", "Manage Users", "Member1", "Admin full control over user profiles and accounts"));
             AddPermission(new Permission("report.view", "View College Reports", "Member8", "Comprehensive admin reports and statistics"));
+            foreach (var permission in SupervisorPermissions.Catalog) AddPermission(permission);
 
             // Seed Roles with their permission assignments
             var studentRole = new Role(UserRoleType.Student, "Student", "College Student pursuing graduation project");
@@ -66,8 +68,10 @@ namespace GraduationPlatform.Member1_UserManagement
             string fullName, string department, string academicId)
         {
             if (string.IsNullOrWhiteSpace(username)) return Result<User>.Fail("Username is required");
-            if (string.IsNullOrWhiteSpace(email) || !email.Contains("@")) return Result<User>.Fail("A valid email address is required");
-            if (string.IsNullOrWhiteSpace(password) || password.Length < 6) return Result<User>.Fail("Password must be at least 6 characters long");
+            if (!IsValidEmail(email)) return Result<User>.Fail("A valid email address is required");
+            if (string.IsNullOrWhiteSpace(password) || password.Length < 8) return Result<User>.Fail("Password must be at least 8 characters long");
+            if (password.Length > 128) return Result<User>.Fail("Password is too long");
+            if (!Enum.IsDefined(typeof(UserRoleType), role)) return Result<User>.Fail("Invalid user role");
             if (string.IsNullOrWhiteSpace(fullName)) return Result<User>.Fail("Full name is required");
 
             lock (_lock)
@@ -123,8 +127,7 @@ namespace GraduationPlatform.Member1_UserManagement
                     if (!user.IsActive)
                         return Result<User>.Fail("Account is deactivated. Please contact college administration");
 
-                    string computedHash = HashPassword(password, user.PasswordSalt);
-                    if (computedHash == user.PasswordHash)
+                    if (VerifyPassword(password, user.PasswordSalt, user.PasswordHash))
                     {
                         return Result<User>.Ok(user, "Login successful");
                     }
@@ -163,11 +166,14 @@ namespace GraduationPlatform.Member1_UserManagement
                     return Result<string>.Fail("No account found with this email");
 
                 var user = _usersById[userId];
-                string token = Guid.NewGuid().ToString("N");
-                user.PasswordResetToken = token;
+                if (!user.IsActive) return Result<string>.Fail("Account is deactivated");
+                if (user.PasswordResetToken != null) _userIdByResetToken.Remove(user.PasswordResetToken);
+                string token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();
+                string tokenHash = HashResetToken(token);
+                user.PasswordResetToken = tokenHash;
                 user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(2);
 
-                _userIdByResetToken[token] = user.Id;
+                _userIdByResetToken[tokenHash] = user.Id;
                 return Result<string>.Ok(token, "Password reset token generated successfully");
             }
         }
@@ -175,28 +181,32 @@ namespace GraduationPlatform.Member1_UserManagement
         public Result ResetPassword(string token, string newPassword)
         {
             if (string.IsNullOrWhiteSpace(token)) return Result.Fail("Reset token is required");
-            if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
-                return Result.Fail("New password must be at least 6 characters long");
+            if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8)
+                return Result.Fail("New password must be at least 8 characters long");
+            if (newPassword.Length > 128) return Result.Fail("Password is too long");
 
             lock (_lock)
             {
                 string userId;
-                if (!_userIdByResetToken.TryGetValue(token, out userId))
+                string tokenHash = HashResetToken(token);
+                if (!_userIdByResetToken.TryGetValue(tokenHash, out userId))
                     return Result.Fail("Invalid or expired reset token");
 
                 var user = _usersById[userId];
+                if (!user.IsActive || user.PasswordResetToken != tokenHash) return Result.Fail("Invalid or expired reset token");
                 if (user.PasswordResetTokenExpiry == null || user.PasswordResetTokenExpiry < DateTime.UtcNow)
                 {
-                    _userIdByResetToken.Remove(token);
+                    _userIdByResetToken.Remove(tokenHash);
                     return Result.Fail("Password reset token has expired");
                 }
 
                 string newSalt = GenerateSalt();
                 user.PasswordSalt = newSalt;
                 user.PasswordHash = HashPassword(newPassword, newSalt);
+                user.SecurityStamp = Guid.NewGuid().ToString("N");
                 user.PasswordResetToken = null;
                 user.PasswordResetTokenExpiry = null;
-                _userIdByResetToken.Remove(token);
+                _userIdByResetToken.Remove(tokenHash);
 
                 return Result.Ok("Password reset successfully. You can now login with your new password");
             }
@@ -208,6 +218,8 @@ namespace GraduationPlatform.Member1_UserManagement
             {
                 if (!_usersById.ContainsKey(userId)) return false;
                 var user = _usersById[userId];
+                if (!user.IsActive) return false;
+                if (user.Role == UserRoleType.Supervisor) return SupervisorPermissions.Allows(user, permissionId);
                 if (!_roles.ContainsKey(user.Role)) return false;
 
                 var role = _roles[user.Role];
@@ -245,22 +257,42 @@ namespace GraduationPlatform.Member1_UserManagement
 
         private static string GenerateSalt()
         {
-            byte[] saltBytes = new byte[16];
-            using (var rng = new RNGCryptoServiceProvider())
-            {
-                rng.GetBytes(saltBytes);
-            }
+            byte[] saltBytes = RandomNumberGenerator.GetBytes(16);
             return Convert.ToBase64String(saltBytes);
         }
 
         private static string HashPassword(string password, string salt)
         {
-            using (var sha256 = SHA256.Create())
+            var hash = Rfc2898DeriveBytes.Pbkdf2(password, Convert.FromBase64String(salt), 210000, HashAlgorithmName.SHA256, 32);
+            return "pbkdf2$210000$" + Convert.ToBase64String(hash);
+        }
+
+        private static bool VerifyPassword(string password, string salt, string storedHash)
+        {
+            if (password == null || password.Length > 128 || string.IsNullOrEmpty(storedHash)) return false;
+            try
             {
-                byte[] combinedBytes = Encoding.UTF8.GetBytes(password + salt);
-                byte[] hash = sha256.ComputeHash(combinedBytes);
-                return Convert.ToBase64String(hash);
+                var parts = storedHash.Split('$');
+                if (parts.Length != 3 || parts[0] != "pbkdf2") return false;
+                int iterations;
+                if (!int.TryParse(parts[1], out iterations) || iterations < 100000 || iterations > 1000000) return false;
+                var expected = Convert.FromBase64String(parts[2]);
+                var actual = Rfc2898DeriveBytes.Pbkdf2(password, Convert.FromBase64String(salt), iterations, HashAlgorithmName.SHA256, 32);
+                return CryptographicOperations.FixedTimeEquals(expected, actual);
             }
+            catch (FormatException) { return false; }
+        }
+
+        private static string HashResetToken(string token)
+        {
+            return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(token))).ToLowerInvariant();
+        }
+
+        private static bool IsValidEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email) || email.Length > 254) return false;
+            try { return new System.Net.Mail.MailAddress(email.Trim()).Address == email.Trim() && email.Contains("."); }
+            catch (FormatException) { return false; }
         }
     }
 }

@@ -5,7 +5,7 @@ using GraduationPlatform.Common;
 
 namespace GraduationPlatform.Member3_TeamManagement
 {
-    public class TeamService : ITeamService
+    public partial class TeamService : ITeamService
     {
         private readonly Dictionary<string, Team> _teams = new Dictionary<string, Team>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, TeamInvitation> _invitations = new Dictionary<string, TeamInvitation>(StringComparer.OrdinalIgnoreCase);
@@ -67,6 +67,7 @@ namespace GraduationPlatform.Member3_TeamManagement
                     return Result<TeamInvitation>.Fail("Team not found");
 
                 var team = _teams[teamId];
+                if (team.IsArchived) return Result<TeamInvitation>.Fail("Completed teams cannot receive invitations");
                 if (!team.LeaderStudentId.Equals(inviterStudentId, StringComparison.OrdinalIgnoreCase))
                     return Result<TeamInvitation>.Fail("Only the team leader can send team invitations");
 
@@ -103,6 +104,7 @@ namespace GraduationPlatform.Member3_TeamManagement
         public Result RespondToInvitation(string invitationId, string studentId, string studentName, bool accept)
         {
             if (string.IsNullOrWhiteSpace(invitationId)) return Result.Fail("Invitation ID is required");
+            if (string.IsNullOrWhiteSpace(studentId)) return Result.Fail("Student ID is required");
 
             lock (_lock)
             {
@@ -128,6 +130,7 @@ namespace GraduationPlatform.Member3_TeamManagement
                     return Result.Fail("The inviting team no longer exists");
 
                 var team = _teams[inv.TeamId];
+                if (team.IsArchived) return Result.Fail("Completed teams cannot receive new members");
                 if (team.Members.Count >= team.MaxMembers)
                 {
                     inv.Status = InvitationStatus.Cancelled;
@@ -151,6 +154,9 @@ namespace GraduationPlatform.Member3_TeamManagement
 
                 inv.Status = InvitationStatus.Accepted;
                 inv.RespondedAt = DateTime.UtcNow;
+
+                foreach (var other in _invitations.Values.Where(i => i.InviteeStudentId.Equals(studentId.Trim(), StringComparison.OrdinalIgnoreCase) && i.Status == InvitationStatus.Pending))
+                { other.Status = InvitationStatus.Cancelled; other.RespondedAt = DateTime.UtcNow; }
 
                 return Result.Ok(string.Format("Successfully joined team '{0}'", team.Name));
             }
@@ -207,6 +213,11 @@ namespace GraduationPlatform.Member3_TeamManagement
 
                 var supervisor = _supervisors[supervisorId];
                 var team = _teams[teamId];
+                if (team.IsArchived) return Result<SupervisorAssignment>.Fail("Completed teams cannot be reassigned");
+                if (team.AssignedSupervisorId == supervisor.Id)
+                {
+                    return Result<SupervisorAssignment>.Ok(_assignments.LastOrDefault(a => a.TeamId == team.Id && a.SupervisorId == supervisor.Id && a.IsActive), "Supervisor is already assigned to this team");
+                }
 
                 // Check supervisor workload quota!
                 if (supervisor.ActiveTeamsCount >= supervisor.MaxSupervisedTeams)
@@ -224,6 +235,7 @@ namespace GraduationPlatform.Member3_TeamManagement
 
                 team.AssignedSupervisorId = supervisor.Id;
                 supervisor.ActiveTeamsCount++;
+                foreach (var previous in _assignments.Where(a => a.TeamId == team.Id && a.IsActive)) previous.IsActive = false;
 
                 var assignment = new SupervisorAssignment
                 {

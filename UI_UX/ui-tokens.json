@@ -20,7 +20,7 @@
   },
   "rules": {
     "supervisorMaxTeams": 3,
-    "teamMaxMembers": 4,
+    "teamMaxMembers": 5,
     "similarityThresholdHighRisk": 0.70,
     "similarityThresholdModerate": 0.40
   }

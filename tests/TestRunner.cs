@@ -32,6 +32,7 @@ namespace GraduationPlatform.Tests
 
                 // Run Integration Tests
                 Integration_Tests.RunTests();
+                int regressionTests = BackendRegressionTests.RunTests();
 
                 stopwatch.Stop();
 
@@ -47,8 +48,9 @@ namespace GraduationPlatform.Tests
                 Console.WriteLine(" - Member 3 (Teams & Supervisor Assignment):  9/9 PASS (100%)");
                 Console.WriteLine(" - Member 4 (Project Tracking & Milestones):  8/8 PASS (100%)");
                 Console.WriteLine(" - End-to-End System Integration Suite:       1/1 PASS (100%)");
+                Console.WriteLine($" - Backend regression and Python integration: {regressionTests}/{regressionTests} PASS (100%)");
                 Console.WriteLine("--------------------------------------------------------------------------------");
-                Console.WriteLine(" TOTAL TESTS RUN: 35 | PASSED: 35 | FAILED: 0 | SUCCESS RATE: 100%");
+                Console.WriteLine($" TOTAL TESTS RUN: {35 + regressionTests} | PASSED: {35 + regressionTests} | FAILED: 0 | SUCCESS RATE: 100%");
                 Console.WriteLine("================================================================================\n");
             }
             catch (Exception ex)

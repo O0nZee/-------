@@ -7,18 +7,6 @@ namespace GraduationPlatform.Member2_ProjectIdeas
 {
     public class SimilarityEngine
     {
-        private static readonly HashSet<string> StopWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            // English stop words
-            "a", "an", "the", "and", "or", "in", "on", "at", "to", "for", "with", "by", "from",
-            "is", "are", "was", "were", "be", "been", "using", "used", "system", "project", "app", 
-            "application", "platform", "based", "graduation", "study", "management",
-
-            // Arabic stop words
-            "في", "من", "على", "إلى", "عن", "مع", "هذا", "هذه", "ذلك", "تلك", "هو", "هي", "هم",
-            "مشروع", "نظام", "تطبيق", "منصة", "تخرج", "إدارة", "دراسة", "باستخدام", "خلال", "بين"
-        };
-
         public static double CalculateCosineSimilarity(string textA, string textB, out List<string> overlappingWords)
         {
             overlappingWords = new List<string>();
@@ -62,51 +50,15 @@ namespace GraduationPlatform.Member2_ProjectIdeas
             string titleB, string descB, List<string> techB,
             out List<string> overlappingTerms)
         {
-            List<string> titleOverlap, descOverlap, techOverlap;
-
-            double titleScore = CalculateCosineSimilarity(titleA, titleB, out titleOverlap);
-            double descScore = CalculateCosineSimilarity(descA, descB, out descOverlap);
-            
-            string techStringA = string.Join(" ", techA ?? new List<string>());
-            string techStringB = string.Join(" ", techB ?? new List<string>());
-            double techScore = CalculateCosineSimilarity(techStringA, techStringB, out techOverlap);
-
-            overlappingTerms = titleOverlap.Union(descOverlap).Union(techOverlap).Distinct().ToList();
-
-            // Weighted formula:
-            // Title carries 45% weight, Description carries 35% weight, Tech stack carries 20% weight
-            double weightedScore = (titleScore * 0.45) + (descScore * 0.35) + (techScore * 0.20);
-            return Math.Round(Math.Min(1.0, weightedScore), 4);
+            return TextSimilarityAnalysis.ComparePair(
+                new SimilarityQuery { Title = titleA, Description = descA, Technologies = techA },
+                new SimilarityDocument { Title = titleB, Description = descB, Technologies = techB },
+                out overlappingTerms);
         }
 
         public static List<string> TokenizeAndNormalize(string input)
         {
-            if (string.IsNullOrWhiteSpace(input)) return new List<string>();
-
-            // Normalize Arabic
-            string normalized = input
-                .Replace('أ', 'ا')
-                .Replace('إ', 'ا')
-                .Replace('آ', 'ا')
-                .Replace('ة', 'ه')
-                .Replace('ى', 'ي');
-
-            // Strip punctuation and special characters
-            normalized = Regex.Replace(normalized, @"[^\w\s]", " ");
-
-            var words = normalized.Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            var result = new List<string>();
-
-            foreach (var rawWord in words)
-            {
-                string word = rawWord.Trim().ToLowerInvariant();
-                if (word.Length >= 2 && !StopWords.Contains(word))
-                {
-                    result.Add(word);
-                }
-            }
-
-            return result;
+            return TextSimilarityAnalysis.Tokenize(input);
         }
 
         private static Dictionary<string, double> GetTermFrequency(List<string> tokens)

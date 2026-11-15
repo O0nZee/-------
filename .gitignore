@@ -1,0 +1,16 @@
+bin/
+obj/
+.tools/
+data/
+artifacts/
+TestResults/
+*.user
+*.suo
+appsettings.Local.json
+.env
+tests/.runtime/
+tests/browser-results/
+node_modules/
+__pycache__/
+*.pyc
+*.pyo

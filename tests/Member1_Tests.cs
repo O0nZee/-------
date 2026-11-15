@@ -135,8 +135,10 @@ namespace GraduationPlatform.Tests
                 Assert(!auth.HasPermission(sReg.Data.Id, "idea.review"), "Student CANNOT review ideas");
 
                 // Supervisor checks
-                Assert(auth.HasPermission(dReg.Data.Id, "idea.review"), "Supervisor can review ideas");
-                Assert(auth.HasPermission(dReg.Data.Id, "progress.track"), "Supervisor can track progress");
+                Assert(!auth.HasPermission(dReg.Data.Id, "idea.review"), "New supervisors have no delegated review permission");
+                dReg.Data.SupervisorPermissionIds.AddRange(new[] { "team.view", "idea.review" });
+                Assert(auth.HasPermission(dReg.Data.Id, "idea.review"), "Granted supervisor can review ideas");
+                Assert(auth.HasPermission(dReg.Data.Id, "team.view"), "Granted supervisor can view assigned teams");
                 Assert(!auth.HasPermission(dReg.Data.Id, "idea.submit"), "Supervisor CANNOT submit student ideas");
 
                 // Admin checks

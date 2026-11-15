@@ -1,0 +1,59 @@
+const e = value => escapeHtml(value);
+const input = (name, label, value = '', extra = '') => `<label>${label}<input class="ui-input" name="${name}" value="${e(value)}" ${extra}></label>`;
+const textarea = (name, label, value = '', extra = '') => `<label>${label}<textarea class="ui-input" name="${name}" rows="4" ${extra}>${e(value)}</textarea></label>`;
+const submit = label => `<div class="card-actions"><button type="submit" class="ui-btn">${label}</button><button type="button" class="ui-btn ui-btn-outline" data-action="close-dialog">إلغاء</button></div>`;
+const decisions = selected => `<label>القرار<select class="ui-input" name="decision"><option value="Approved" ${selected === 'Approved' ? 'selected' : ''}>اعتماد</option><option value="ModificationRequested" ${selected === 'ModificationRequested' ? 'selected' : ''}>طلب تعديلات</option><option value="Rejected" ${selected === 'Rejected' ? 'selected' : ''}>رفض</option></select></label>`;
+
+export const Dialogs = {
+    task(app, { task } = {}) {
+        const editable = app.role === 'Admin' || app.team.leaderStudentId === app.user.id || !task;
+        const members = app.role === 'Admin' || app.team.leaderStudentId === app.user.id ? app.team.members : app.team.members.filter(m => m.studentId === app.user.id);
+        const assigned = task?.assignments.map(a => a.assignedStudentId) || (app.role === 'Student' ? [app.user.id] : []);
+        return { title: task ? 'تعديل المهمة' : 'مهمة جديدة', html: `<form data-form="task" ${task ? `data-id="${e(task.id)}"` : ''} data-assignments="${editable ? 'editable' : 'readonly'}">
+            ${input('title', 'عنوان المهمة', task?.title, 'required maxlength="200"')}${textarea('description', 'وصف المهمة', task?.description, 'maxlength="5000"')}
+            <div class="form-row"><label>الأولوية<select class="ui-input" name="priority">${Object.entries({ Low: 'منخفضة', Medium: 'متوسطة', High: 'عالية', Urgent: 'عاجلة' }).map(([key, text]) => `<option value="${key}" ${(task?.priority || 'Medium') === key ? 'selected' : ''}>${text}</option>`).join('')}</select></label><label>المرحلة<select class="ui-input" name="milestoneId"><option value="">بدون مرحلة</option>${app.current.milestones.map(m => `<option value="${e(m.id)}" ${(task ? task.milestoneId : app.current.milestones[0]?.id) === m.id ? 'selected' : ''}>${e(app.phaseTitle(m))}</option>`).join('')}</select></label></div>
+            <div class="form-row">${input('startDate', 'بداية المهمة — بتوقيت القاهرة', dateInputValue(task?.startDate || new Date().toISOString()), 'type="datetime-local" required')}${input('dueDate', 'موعد التسليم — بتوقيت القاهرة', dateInputValue(task?.dueDate || new Date(Date.now() + 604800000).toISOString()), 'type="datetime-local" required')}</div>
+            ${editable ? `<fieldset style="border:0"><legend class="muted">الطلاب المكلّفون</legend><div class="check-options">${members.map(member => `<label><input name="assignedStudentIds" type="checkbox" value="${e(member.studentId)}" ${assigned.includes(member.studentId) ? 'checked' : ''} ${!member.isActive ? 'disabled' : ''}>${e(member.memberName)}</label>`).join('')}</div></fieldset>` : `<p class="muted">المكلّفون: ${e(task.assignments.map(a => a.studentName).join('، '))}</p>`}${submit('حفظ المهمة')}</form>` };
+    },
+    ideaReview(app, { idea, decision = 'Approved' }) {
+        return { title: 'مراجعة فكرة المشروع', html: `<p class="muted" dir="auto">${e(idea.title)}</p><form data-form="idea-review" data-id="${e(idea.id)}">${decisions(decision)}${textarea('feedback', 'ملاحظات المراجعة', '', `maxlength="5000" ${decision !== 'Approved' ? 'required' : ''}`)}${submit('حفظ القرار وإخطار الفريق')}</form>` };
+    },
+    submissionReview(app, { submission }) {
+        const decision = submission.decision === 'PendingReview' ? 'Approved' : submission.decision;
+        return { title: 'مراجعة وتقييم التسليم', html: `<p class="muted">${e(submission.title)} · ${e(submission.originalFileName)}</p><form data-form="submission-review" data-id="${e(submission.id)}">${decisions(decision)}${input('grade', 'الدرجة من ١٠٠', submission.grade ?? '', `type="number" min="0" max="100" step="0.1" ${decision === 'Approved' ? 'required' : ''}`)}${textarea('feedback', 'ملاحظات المشرف', submission.feedback, `maxlength="5000" ${decision !== 'Approved' ? 'required' : ''}`)}${submit('حفظ المراجعة')}</form>` };
+    },
+    upload(app, { milestoneId }) {
+        return { title: 'تسليم ملف للمرحلة', html: `<form data-form="upload" enctype="multipart/form-data">${input('title', 'عنوان التسليم', '', 'required maxlength="200"')}<label>المرحلة<select class="ui-input" name="milestoneId">${app.current.milestones.map(m => `<option value="${e(m.id)}" ${m.id === milestoneId ? 'selected' : ''}>${e(app.phaseTitle(m))}</option>`).join('')}</select></label><label>الملف<input class="ui-input" type="file" name="file" required accept=".pdf,.docx,.xlsx,.pptx,.zip,.txt,.md,.png,.jpg,.jpeg"></label><p class="muted">الحد الأقصى ${formatNumber(app.settings.maxUploadMegabytes)} ميجابايت. التسليمات السابقة محفوظة للمراجعة.</p>${submit('رفع الملف وحفظ التسليم')}</form>` };
+    },
+    user(app, { user } = {}) {
+        const own = user?.id === app.user.id;
+        return { title: user ? 'تعديل الحساب' : 'إنشاء حساب جديد', html: `<form data-form="${user ? 'user-edit' : 'user-create'}" ${user ? `data-id="${e(user.id)}"` : ''}>${input('fullName', 'الاسم الكامل', user?.profile.fullName, 'required maxlength="100"')}${!user ? `<div class="form-row">${input('username', 'اسم المستخدم', '', 'required minlength="3" maxlength="50" autocomplete="off"')}${input('email', 'البريد الإلكتروني', '', 'type="email" required maxlength="254"')}</div>${input('password', 'كلمة المرور الأولى', '', 'type="password" required minlength="8" maxlength="128" autocomplete="new-password"')}` : `<p class="muted" dir="ltr">${e(user.username)} · ${e(user.email)}</p>`}
+            <div class="form-row"><label>الدور<select class="ui-input" name="role" ${own ? 'disabled' : ''}>${Object.entries(roleLabels).map(([role, label]) => `<option value="${role}" ${(user?.role || 'Student') === role ? 'selected' : ''}>${label}</option>`).join('')}</select></label>${input('department', 'القسم', user?.profile.department, 'required maxlength="100"')}</div>
+            ${user ? `<label class="inline-check"><input type="checkbox" name="isActive" ${user.isActive ? 'checked' : ''} ${own ? 'disabled' : ''}>الحساب نشط</label>` : input('academicId', 'الرقم الأكاديمي', '', 'maxlength="50"')}${submit(user ? 'حفظ بيانات الحساب' : 'إنشاء الحساب')}</form>` };
+    },
+    supervisor(app, { supervisor }) {
+        return { title: 'تعديل سعة الإشراف', html: `<p class="muted">${e(supervisor.name)} · ${formatNumber(supervisor.activeTeamsCount)} فرق نشطة</p><form data-form="supervisor-edit" data-id="${e(supervisor.id)}">${input('maxTeams', 'الحد الأقصى للفرق', supervisor.maxSupervisedTeams, `type="number" min="${Math.max(1, supervisor.activeTeamsCount)}" max="20" required`)}${textarea('specialization', 'التخصص', supervisor.specialization, 'maxlength="200"')}${submit('حفظ السعة والتخصص')}</form>` };
+    },
+    supervisorPermissions(app, { supervisor, catalog, access }) {
+        return { title: 'صلاحيات المشرف', html: `<p class="muted">${e(supervisor.name)} · تحدد إدارة الكلية الصلاحيات على الفرق المسندة فقط. إلغاء جميع الاختيارات يوقف وصول الإشراف.</p><form data-form="supervisor-permissions" data-id="${e(supervisor.userId)}"><fieldset style="border:0"><legend>الصلاحيات الممنوحة</legend><div class="permission-options">${catalog.map(permission => `<label><input type="checkbox" name="permissionIds" value="${e(permission.id)}" ${access.permissionIds.includes(permission.id) ? 'checked' : ''}><span>${e(permission.name)}</span><small class="muted">${e(permission.description)}</small></label>`).join('')}</div></fieldset><p class="muted">أي صلاحية تحتاج اختيار «متابعة الفرق المسندة».</p>${access.updatedAt ? `<p class="muted">آخر تعديل: ${e(access.updatedByName || 'إدارة الكلية')} · ${e(formatDate(access.updatedAt))}</p>` : ''}${submit('حفظ صلاحيات المشرف')}</form>` };
+    },
+    reminder() { return { title: 'رسالة لأعضاء الفريق', html: `<form data-form="reminder">${textarea('message', 'الرسالة', '', 'required maxlength="3000"')}${submit('إرسال الرسالة للفريق')}</form>` }; },
+    archiveFinal(app) {
+        const now = new Date(), year = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+        const grades = app.current.milestones.map(m => app.current.submissions.filter(s => s.milestoneId === m.id && s.decision === 'Approved').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]?.grade).filter(g => g != null);
+        const average = grades.length ? Math.round(grades.reduce((sum, grade) => sum + grade, 0) / grades.length * 10) / 10 : '';
+        return { title: 'التقييم النهائي وأرشفة المشروع', html: `<p class="muted">الأرشفة تحفظ النتيجة، وتغلق تعديل المشروع، وتحرر سعة إشراف للفريق التالي.</p><form data-form="archive-final">${input('grade', 'الدرجة النهائية من ١٠٠', average, 'type="number" min="0" max="100" step="0.1" required')}${input('academicYear', 'العام الدراسي', `${year}-${year + 1}`, 'required pattern="[0-9]{4}-[0-9]{4}" maxlength="9"')}${submit('اعتماد النتيجة وأرشفة المشروع')}</form>` };
+    },
+    archiveHistory() {
+        return { title: 'إضافة مشروع سابق للأرشيف', html: `<form data-form="archive-history">${input('title', 'عنوان المشروع', '', 'required maxlength="200"')}${textarea('abstract', 'ملخص المشروع', '', 'required maxlength="10000"')}<div class="form-row">${input('academicYear', 'العام الدراسي', '', 'required pattern="[0-9]{4}-[0-9]{4}" maxlength="9" placeholder="2023-2024"')}${input('grade', 'التقدير النهائي', '', 'required maxlength="30" placeholder="A+ أو الدرجة"')}</div><div class="form-row">${input('department', 'القسم', '', 'required maxlength="100"')}${input('track', 'المسار', '', 'required maxlength="100"')}</div>${input('supervisorName', 'اسم المشرف', '', 'required maxlength="100"')}${input('technologies', 'التقنيات — مفصولة بفواصل', '', 'placeholder="Python, React"')}${submit('حفظ المشروع بالأرشيف')}</form>` };
+    },
+    mail(app, { message }) {
+        const lines = (message.body || '').split('\n').map(line => {
+            const match = line.match(/https?:\/\/\S+/); if (!match) return e(line);
+            try { const url = new URL(match[0]); if (url.origin === location.origin) return e(line).replace(e(match[0]), `<a href="${e(url.href)}" target="_blank" rel="noopener">${e(match[0])}</a>`); }
+            catch { /* Display invalid URLs as ordinary text. */ }
+            return e(line);
+        });
+        return { title: message.subject, html: `<p class="muted" dir="ltr">${e(message.to)}</p><div class="mail-body" dir="auto">${lines.join('\n')}</div>` };
+    }
+};

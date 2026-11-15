@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="لوحة التحكم — منصة مشروعات التخرج">
+    <meta name="theme-color" content="#1e40af">
+    <title>لوحة التحكم | منصة مشروعات التخرج</title>
+    <link rel="icon" href="/UI_UX/Assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/UI_UX/Styles/design-system.css">
+    <link rel="stylesheet" href="/UI_UX/Styles/components.css">
+    <link rel="stylesheet" href="/UI_UX/Styles/application.css">
+    <link rel="stylesheet" href="/UI_UX/Styles/dashboard.css">
+    <style>
+        /* ========================================
+           Dashboard Page — Standalone Styles
+           ======================================== */
+
+        /* ── Layout ── */
+        .dash-page {
+            min-height: 100vh;
+            background: var(--surface-2, #f8fafc);
+            font-family: var(--font-body, system-ui, sans-serif);
+        }
+
+        /* ── Top Bar ── */
+        .dash-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--surface-0, #fff);
+            border-bottom: 1px solid var(--border, #e2e8f0);
+            padding: 0 1.5rem;
+            height: 3.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .dash-topbar .brand {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            text-decoration: none;
+            color: inherit;
+            font-weight: 700;
+            font-size: 1.05rem;
+        }
+        .dash-topbar .brand-mark { font-size: 1.4rem; }
+        .dash-topbar-right {
+            margin-inline-start: auto;
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+        }
+        .dash-avatar {
+            width: 2rem; height: 2rem;
+            border-radius: 50%;
+            background: var(--accent, #2563eb);
+            color: #fff;
+            display: grid;
+            place-items: center;
+            font-size: .75rem;
+            font-weight: 700;
+        }
+        .dash-username { font-size: .875rem; font-weight: 600; }
+        .dash-role-badge {
+            font-size: .7rem;
+            padding: .15rem .5rem;
+            border-radius: 999px;
+            background: var(--accent-light, #dbeafe);
+            color: var(--accent-dark, #1e40af);
+            font-weight: 600;
+        }
+
+        /* ── Page body ── */
+        .dash-body {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* ── Page header ── */
+        .dash-header {
+            margin-bottom: 1.75rem;
+        }
+        .dash-header h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin: 0 0 .25rem;
+            color: var(--text-primary, #0f172a);
+        }
+        .dash-header p {
+            margin: 0;
+            color: var(--text-muted, #64748b);
+            font-size: .9rem;
+        }
+        .dash-header-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* ── Stat Grid ── */
+        .dash-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+        }
+        .dash-stat {
+            background: var(--surface-0, #fff);
+            border: 1px solid var(--border, #e2e8f0);
+            border-radius: .75rem;
+            padding: 1.25rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: .4rem;
+        }
+        .dash-stat.danger { border-color: #fca5a5; background: #fff5f5; }
+        .dash-stat.warning { border-color: #fcd34d; background: #fffbeb; }
+        .dash-stat.success { border-color: #86efac; background: #f0fdf4; }
+        .dash-stat small { font-size: .78rem; color: var(--text-muted, #64748b); font-weight: 500; }
+        .dash-stat strong { font-size: 1.75rem; font-weight: 800; color: var(--text-primary, #0f172a); }
+        .dash-stat .stat-icon { font-size: 1.3rem; }
+
+        /* ── Section grid ── */
+        .dash-grid { display: grid; gap: 1.5rem; grid-template-columns: 1fr; }
+        .dash-grid.two-col { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); }
+
+        /* ── Card ── */
+        .dash-card {
+            background: var(--surface-0, #fff);
+            border: 1px solid var(--border, #e2e8f0);
+            border-radius: .875rem;
+            overflow: hidden;
+        }
+        .dash-card-head {
+            padding: 1rem 1.25rem .75rem;
+            border-bottom: 1px solid var(--border, #e2e8f0);
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+        }
+        .dash-card-head h2 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 700;
+            flex: 1;
+            color: var(--text-primary, #0f172a);
+        }
+        .dash-card-body { padding: 1.25rem; }
+        .dash-card-body.no-pad { padding: 0; }
+
+        /* ── Team card ── */
+        .team-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+        .team-card {
+            border: 1.5px solid var(--border, #e2e8f0);
+            border-radius: .75rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+            cursor: pointer;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .team-card:hover, .team-card.active {
+            border-color: var(--accent, #2563eb);
+            box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+        }
+        .team-card h3 { margin: 0; font-size: .95rem; font-weight: 700; }
+        .team-card .team-meta { font-size: .8rem; color: var(--text-muted, #64748b); }
+        .team-card .team-idea { font-size: .85rem; color: var(--text-secondary, #334155); }
+
+        /* ── Progress bar ── */
+        .progress-wrap { margin-top: .5rem; }
+        .progress-track {
+            height: .45rem;
+            background: var(--surface-2, #f1f5f9);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--accent, #2563eb);
+            border-radius: 999px;
+            transition: width .4s ease;
+        }
+        .progress-label { display: flex; justify-content: space-between; font-size: .75rem; color: var(--text-muted, #64748b); margin-top: .2rem; }
+
+        /* ── Alerts list ── */
+        .alert-list { display: flex; flex-direction: column; gap: .5rem; }
+        .alert-item {
+            padding: .75rem 1rem;
+            border-radius: .5rem;
+            border: 1px solid;
+            font-size: .875rem;
+        }
+        .alert-item.overdue { border-color: #fca5a5; background: #fff5f5; color: #991b1b; }
+        .alert-item.upcoming { border-color: #fcd34d; background: #fffbeb; color: #92400e; }
+        .alert-item strong { display: block; margin-bottom: .15rem; }
+        .alert-item small { opacity: .8; }
+
+        /* ── Invitations ── */
+        .invite-list { display: flex; flex-direction: column; gap: .625rem; }
+        .invite-item {
+            display: flex; align-items: center; gap: .75rem;
+            padding: .75rem 1rem;
+            border: 1px solid var(--border, #e2e8f0);
+            border-radius: .5rem;
+            font-size: .875rem;
+        }
+        .invite-item .invite-info { flex: 1; }
+        .invite-item .invite-team { font-weight: 600; }
+        .invite-item .invite-role { font-size: .78rem; color: var(--text-muted, #64748b); }
+        .invite-actions { display: flex; gap: .4rem; }
+
+        /* ── Notifications ── */
+        .notif-list { display: flex; flex-direction: column; }
+        .notif-item {
+            display: flex; gap: .75rem; align-items: flex-start;
+            padding: .875rem 1.25rem;
+            border-bottom: 1px solid var(--border, #f1f5f9);
+        }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item.unread { background: var(--accent-lightest, #eff6ff); }
+        .notif-dot {
+            width: .55rem; height: .55rem;
+            border-radius: 50%;
+            background: var(--accent, #2563eb);
+            margin-top: .35rem;
+            flex-shrink: 0;
+        }
+        .notif-dot.read { background: transparent; border: 1.5px solid var(--border, #e2e8f0); }
+        .notif-info .notif-title { font-size: .875rem; font-weight: 600; margin-bottom: .15rem; }
+        .notif-info .notif-msg { font-size: .8rem; color: var(--text-muted, #64748b); }
+        .notif-info .notif-time { font-size: .72rem; color: var(--text-muted, #94a3b8); margin-top: .2rem; }
+
+        /* ── Empty state ── */
+        .dash-empty {
+            padding: 2.5rem 1rem;
+            text-align: center;
+            color: var(--text-muted, #64748b);
+            font-size: .9rem;
+        }
+        .dash-empty .empty-icon { font-size: 2rem; margin-bottom: .5rem; }
+
+        /* ── Loading / Error ── */
+        .dash-loading {
+            min-height: 60vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            color: var(--text-muted, #64748b);
+        }
+        .dash-spinner {
+            width: 2.5rem; height: 2.5rem;
+            border: 3px solid var(--border, #e2e8f0);
+            border-top-color: var(--accent, #2563eb);
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            .dash-body { padding: 1rem; }
+            .dash-stats { grid-template-columns: repeat(2, 1fr); }
+            .dash-grid.two-col { grid-template-columns: 1fr; }
+            .team-cards { grid-template-columns: 1fr; }
+        }
+    </style>
+    <script src="/Frontend/Scripts/apiService.js" defer></script>
+    <script defer>
+    'use strict';
+
+    /* ── Helpers ── */
+    const e = v => escapeHtml(v);
+    const fmtDate = v => v
+        ? new Intl.DateTimeFormat('ar-EG', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Africa/Cairo' }).format(new Date(v))
+        : '—';
+    const fmtNum = v => new Intl.NumberFormat('ar-EG', { maximumFractionDigits: 1 }).format(Number(v) || 0);
+
+    const roleLabel = { Student: 'طالب', Supervisor: 'مشرف أكاديمي', Admin: 'إدارة الكلية' };
+    const portalHref = { Student: '/student', Supervisor: '/supervisor', Admin: '/admin' };
+
+    function progress(pct) {
+        const p = Math.max(0, Math.min(100, Number(pct) || 0));
+        return `<div class="progress-wrap">
+            <div class="progress-track"><div class="progress-fill" style="width:${p}%"></div></div>
+            <div class="progress-label"><span>نسبة الإنجاز</span><span>${fmtNum(p)}٪</span></div>
+        </div>`;
+    }
+
+    function badge(status, text) {
+        const cls = ['Approved','Accepted','Completed'].includes(status) ? 'green'
+            : ['Rejected','High'].includes(status) ? 'red'
+            : ['PendingReview','ModificationRequested','Pending','Moderate'].includes(status) ? 'amber'
+            : 'gray';
+        return `<span class="badge ${cls}">${e(text || status)}</span>`;
+    }
+
+    /* ── Render helpers ── */
+    function renderStats(data) {
+        const { role, dashboard } = data;
+        const stats = dashboard.statistics;
+        const timeline = data.currentTeam?.timeline;
+
+        let items;
+        if (role === 'Student') {
+            items = [
+                { icon: '📊', label: 'إنجاز الفريق',    value: fmtNum(timeline?.completionPercentage || 0) + '٪', cls: '' },
+                { icon: '✅', label: 'المهام المكتملة',  value: fmtNum(timeline?.completedTasks || 0),             cls: 'success' },
+                { icon: '⏳', label: 'المهام المتبقية',  value: fmtNum((timeline?.totalTasks||0) - (timeline?.completedTasks||0)), cls: '' },
+                { icon: '⚠️', label: 'المهام المتأخرة',  value: fmtNum(stats.overdueTasks),                        cls: stats.overdueTasks > 0 ? 'danger' : '' }
+            ];
+        } else if (role === 'Supervisor') {
+            items = [
+                { icon: '👥', label: 'الفرق تحت إشرافك',    value: fmtNum(stats.teams),          cls: '' },
+                { icon: '💡', label: 'أفكار تنتظر المراجعة', value: fmtNum(stats.pendingIdeas),   cls: stats.pendingIdeas > 0 ? 'warning' : '' },
+                { icon: '🏆', label: 'المشروعات المكتملة',   value: fmtNum(stats.completedTeams), cls: 'success' },
+                { icon: '⚠️', label: 'المهام المتأخرة',      value: fmtNum(stats.overdueTasks),   cls: stats.overdueTasks > 0 ? 'danger' : '' }
+            ];
+        } else {
+            items = [
+                { icon: '🎓', label: 'إجمالي الطلاب',  value: fmtNum(stats.students),      cls: '' },
+                { icon: '👥', label: 'الفرق المشكّلة',  value: fmtNum(stats.teams),         cls: '' },
+                { icon: '✅', label: 'الأفكار المعتمدة', value: fmtNum(stats.approvedIdeas), cls: 'success' },
+                { icon: '👨‍🏫', label: 'المشرفون',         value: fmtNum(stats.supervisors),   cls: '' }
+            ];
+        }
+
+        return `<div class="dash-stats">
+            ${items.map(it => `
+                <div class="dash-stat ${it.cls}">
+                    <span class="stat-icon">${it.icon}</span>
+                    <small>${it.label}</small>
+                    <strong>${it.value}</strong>
+                </div>`).join('')}
+        </div>`;
+    }
+
+    function renderTeams(data) {
+        const { teams, currentTeamId } = data;
+        if (!teams.length) {
+            return `<div class="dash-empty"><div class="empty-icon">👥</div>لم يتكوّن فريق بعد</div>`;
+        }
+        return `<div class="team-cards">
+            ${teams.map(t => `
+                <div class="team-card ${t.id === currentTeamId ? 'active' : ''}"
+                     data-action="go-team" data-id="${e(t.id)}">
+                    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+                        <h3>${e(t.name)}</h3>
+                        ${t.isArchived ? badge('Completed','مؤرشف') : t.idea ? badge('Approved','فكرة معتمدة') : badge('PendingReview','بانتظار الفكرة')}
+                    </div>
+                    <p class="team-idea">${e(t.idea?.title || 'ابدأ بتقديم مقترح المشروع')}</p>
+                    <div class="team-meta">
+                        ${e(t.supervisor?.name || 'لم يُسند مشرف بعد')} · ${fmtNum(t.members.length)} أعضاء
+                        ${t.grade != null ? ` · درجة: ${t.grade}/100` : ''}
+                    </div>
+                    ${progress(t.timeline?.completionPercentage || 0)}
+                </div>`).join('')}
+        </div>`;
+    }
+
+    function renderAlerts(alerts) {
+        if (!alerts.length) return '<div class="dash-empty"><div class="empty-icon">🎉</div>لا توجد مواعيد تحتاج متابعة</div>';
+        return `<div class="alert-list">
+            ${alerts.slice(0, 8).map(a => `
+                <div class="alert-item ${a.isOverdue ? 'overdue' : 'upcoming'}">
+                    <strong>${e(a.taskTitle)}</strong>
+                    ${a.isOverdue ? 'تجاوزت موعد التسليم' : 'موعد التسليم يقترب'} · <small>${e(fmtDate(a.dueDate))}</small>
+                </div>`).join('')}
+        </div>`;
+    }
+
+    function renderInvitations(invitations, userId) {
+        const pending = invitations.filter(i => i.inviteeStudentId === userId && i.status === 'Pending');
+        if (!pending.length) return '<div class="dash-empty"><div class="empty-icon">📭</div>لا توجد دعوات معلقة</div>';
+        return `<div class="invite-list">
+            ${pending.map(inv => `
+                <div class="invite-item">
+                    <div class="invite-info">
+                        <div class="invite-team">${e(inv.teamName)}</div>
+                        <div class="invite-role">الدور المقترح: ${e(inv.proposedRole === 'Member' ? 'عضو' : inv.proposedRole)}</div>
+                    </div>
+                    <div class="invite-actions">
+                        <button class="ui-btn ui-btn-sm ui-btn-success" data-action="accept-inv" data-id="${e(inv.id)}">قبول</button>
+                        <button class="ui-btn ui-btn-sm ui-btn-outline" data-action="reject-inv" data-id="${e(inv.id)}">رفض</button>
+                    </div>
+                </div>`).join('')}
+        </div>`;
+    }
+
+    function renderNotifications(notifications) {
+        if (!notifications.length) return '<div class="dash-empty"><div class="empty-icon">🔔</div>لا توجد إشعارات بعد</div>';
+        return `<div class="notif-list">
+            ${notifications.slice(0, 10).map(n => `
+                <div class="notif-item ${n.readAt ? '' : 'unread'}">
+                    <div class="notif-dot ${n.readAt ? 'read' : ''}"></div>
+                    <div class="notif-info">
+                        <div class="notif-title">${e(n.title)}</div>
+                        <div class="notif-msg">${e(n.message)}</div>
+                        <div class="notif-time">${fmtDate(n.createdAt)}</div>
+                    </div>
+                </div>`).join('')}
+        </div>`;
+    }
+
+    /* ── Main render ── */
+    function renderDashboard(data) {
+        const { user, dashboard, notifications, invitations, role } = data;
+        const unread = notifications.filter(n => !n.readAt).length;
+        const portalUrl = portalHref[role] || '/';
+
+        document.getElementById('dashRoot').innerHTML = `
+        <div class="dash-page">
+
+            <!-- Top Bar -->
+            <header class="dash-topbar">
+                <a href="${portalUrl}" class="brand">
+                    <span class="brand-mark">🎓</span>
+                    <span>منصة مشروعات التخرج</span>
+                </a>
+                <div class="dash-topbar-right">
+                    <span class="dash-role-badge">${e(roleLabel[role] || role)}</span>
+                    <span class="dash-avatar">${e((user.profile?.fullName || user.username).slice(0, 2))}</span>
+                    <span class="dash-username">${e(user.profile?.fullName || user.username)}</span>
+                    <a class="ui-btn ui-btn-outline ui-btn-sm" href="${portalUrl}">الانتقال للمنصة</a>
+                </div>
+            </header>
+
+            <!-- Page body -->
+            <div class="dash-body">
+
+                <!-- Header -->
+                <div class="dash-header">
+                    <div class="dash-header-row">
+                        <div>
+                            <h1>لوحة التحكم</h1>
+                            <p>مرحباً، ${e(user.profile?.fullName || user.username)} · ${new Date().toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</p>
+                        </div>
+                        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+                            ${unread > 0 ? `<span class="badge amber">${fmtNum(unread)} إشعار غير مقروء</span>` : ''}
+                            <button class="ui-btn ui-btn-outline ui-btn-sm" id="refreshBtn">🔄 تحديث</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                ${renderStats(data)}
+
+                <!-- Main content -->
+                <div class="dash-grid">
+
+                    <!-- Teams / Projects -->
+                    <div class="dash-card">
+                        <div class="dash-card-head">
+                            <h2>${role === 'Student' ? '🏠 مشروع فريقك' : '👥 متابعة الفرق'}</h2>
+                            <span class="badge gray">${fmtNum(data.teams.length)} فريق</span>
+                        </div>
+                        <div class="dash-card-body">${renderTeams(data)}</div>
+                    </div>
+
+                    <!-- Two-column section -->
+                    <div class="dash-grid two-col">
+
+                        <!-- Alerts -->
+                        <div class="dash-card">
+                            <div class="dash-card-head">
+                                <h2>⏰ مواعيد تحتاج متابعة</h2>
+                                ${dashboard.alerts.length ? `<span class="badge amber">${fmtNum(dashboard.alerts.length)} تنبيه</span>` : ''}
+                            </div>
+                            <div class="dash-card-body">${renderAlerts(dashboard.alerts)}</div>
+                        </div>
+
+                        <!-- Invitations (Student only) or Pending Ideas (Supervisor/Admin) -->
+                        ${role === 'Student' ? `
+                        <div class="dash-card">
+                            <div class="dash-card-head">
+                                <h2>📨 دعوات الانضمام</h2>
+                                ${invitations.filter(i=>i.status==='Pending'&&i.inviteeStudentId===user.id).length ? `<span class="badge amber">${invitations.filter(i=>i.status==='Pending'&&i.inviteeStudentId===user.id).length}</span>` : ''}
+                            </div>
+                            <div class="dash-card-body">${renderInvitations(invitations, user.id)}</div>
+                        </div>` : `
+                        <div class="dash-card">
+                            <div class="dash-card-head">
+                                <h2>💡 أفكار قيد المراجعة</h2>
+                                ${dashboard.statistics.pendingIdeas > 0 ? `<span class="badge amber">${fmtNum(dashboard.statistics.pendingIdeas)}</span>` : ''}
+                            </div>
+                            <div class="dash-card-body">
+                                ${dashboard.statistics.pendingIdeas > 0
+                                    ? `<div style="padding:.5rem 0;text-align:center">
+                                        <strong style="font-size:2rem">${fmtNum(dashboard.statistics.pendingIdeas)}</strong>
+                                        <p class="muted" style="margin:.5rem 0 1rem">فكرة تنتظر مراجعتك</p>
+                                        <a class="ui-btn" href="${portalUrl}#ideas">مراجعة الأفكار</a>
+                                       </div>`
+                                    : '<div class="dash-empty"><div class="empty-icon">✅</div>لا توجد أفكار معلقة</div>'}
+                            </div>
+                        </div>`}
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="dash-card">
+                        <div class="dash-card-head">
+                            <h2>🔔 الإشعارات الأخيرة</h2>
+                            <div style="display:flex;gap:.5rem;align-items:center">
+                                ${unread > 0 ? `<span class="badge amber">${fmtNum(unread)} جديد</span>` : ''}
+                                <button class="ui-btn ui-btn-outline ui-btn-sm" id="markAllRead">تحديد الكل كمقروء</button>
+                            </div>
+                        </div>
+                        <div class="dash-card-body no-pad">${renderNotifications(notifications)}</div>
+                    </div>
+
+                </div>
+                <!-- /main content -->
+
+            </div><!-- /dash-body -->
+        </div><!-- /dash-page -->`;
+
+        /* ── Event listeners ── */
+        document.getElementById('refreshBtn')?.addEventListener('click', () => loadDashboard());
+        document.getElementById('markAllRead')?.addEventListener('click', () => markAllRead());
+
+        document.getElementById('dashRoot').addEventListener('click', e => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action, id = btn.dataset.id;
+            if (action === 'go-team') window.location.href = `${portalUrl}#team`;
+            else if (action === 'accept-inv') respondInvitation(id, true);
+            else if (action === 'reject-inv') respondInvitation(id, false);
+        });
+    }
+
+    async function markAllRead() {
+        try {
+            await api.request('/notifications/read-all', { method: 'POST', body: {} });
+            await loadDashboard();
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    async function respondInvitation(id, accept) {
+        try {
+            await api.request(`/invitations/${id}/respond`, { method: 'POST', body: { accept } });
+            await loadDashboard();
+        } catch (err) { showToast(err.message, true); }
+    }
+
+    function showToast(msg, isError = false) {
+        const toast = document.getElementById('dashToast');
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.className = 'dash-toast ' + (isError ? 'error' : 'success');
+        toast.hidden = false;
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => { toast.hidden = true; }, 3500);
+    }
+
+    /* ── Boot ── */
+    async function loadDashboard() {
+        const root = document.getElementById('dashRoot');
+        root.innerHTML = `<div class="dash-loading"><div class="dash-spinner"></div><p>جاري تحميل لوحة التحكم…</p></div>`;
+
+        try {
+            const user = await api.init();
+            if (!user) { location.href = '/?session=expired'; return; }
+
+            const [dashboard, settings, invitations, notifications] = await Promise.all([
+                api.request('/dashboard'),
+                api.request('/settings'),
+                api.request('/invitations').catch(() => []),
+                api.request('/notifications').catch(() => [])
+            ]);
+
+            const teams = dashboard.teams || [];
+            const currentTeam = teams.length
+                ? await api.request(`/teams/${encodeURIComponent(teams[0].id)}`).catch(() => null)
+                : null;
+
+            renderDashboard({
+                user,
+                role: user.role,
+                dashboard,
+                settings,
+                invitations,
+                notifications,
+                teams,
+                currentTeamId: teams[0]?.id || null,
+                currentTeam
+            });
+
+        } catch (err) {
+            root.innerHTML = `
+                <div class="dash-loading">
+                    <div style="color:#dc2626;font-size:2rem">⚠️</div>
+                    <p>${escapeHtml(err.message)}</p>
+                    <button class="ui-btn" onclick="loadDashboard()">إعادة المحاولة</button>
+                    <a class="text-button" href="/">العودة للبداية</a>
+                </div>`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
+</head>
+<body>
+    <div id="dashRoot">
+        <div class="dash-loading">
+            <div class="dash-spinner"></div>
+            <p>جاري تحميل لوحة التحكم…</p>
+        </div>
+    </div>
+    <div id="dashToast" role="status" aria-live="polite" hidden style="
+        position:fixed;bottom:1.5rem;inset-inline-start:1.5rem;
+        padding:.75rem 1.25rem;border-radius:.625rem;
+        font-size:.875rem;font-weight:600;color:#fff;
+        z-index:9999;max-width:22rem;
+        box-shadow:0 4px 16px rgba(0,0,0,.18);">
+    </div>
+    <style>
+        .dash-toast.success { background:#16a34a; }
+        .dash-toast.error   { background:#dc2626; }
+    </style>
+</body>
+</html>

@@ -71,7 +71,11 @@ namespace GraduationPlatform.Member1_UserManagement
         public string PasswordHash { get; set; }
         public string PasswordSalt { get; set; }
         public UserRoleType Role { get; set; }
+        public List<string> SupervisorPermissionIds { get; set; } = new();
+        public string SupervisorPermissionsUpdatedBy { get; set; }
+        public DateTime? SupervisorPermissionsUpdatedAt { get; set; }
         public bool IsActive { get; set; }
+        public string SecurityStamp { get; set; } = Guid.NewGuid().ToString("N");
         public DateTime CreatedAt { get; set; }
         public UserProfile Profile { get; set; }
         public string PasswordResetToken { get; set; }

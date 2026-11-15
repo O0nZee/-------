@@ -36,6 +36,8 @@ namespace GraduationPlatform.Member3_TeamManagement
         public string ProjectIdeaId { get; set; }
         public string AssignedSupervisorId { get; set; }
         public int MaxMembers { get; set; }
+        public bool IsArchived { get; set; }
+        public DateTime? CompletedAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<TeamMember> Members { get; set; }
 

@@ -37,6 +37,7 @@ namespace GraduationPlatform.Tests
                 var doctor = authService.Register("dr_mostafa", "mostafa@alexu.edu.eg", "ProfDocPass1", UserRoleType.Supervisor,
                     "Dr. Mostafa Kamel", "Computer Science", "FAC-014").Data;
                 Assert(doctor != null, "Supervisor registered");
+                doctor.SupervisorPermissionIds.AddRange(new[] { "team.view", "idea.review" });
 
                 // Register supervisor in Member 3 system
                 var supervisorProfile = teamService.RegisterSupervisor(doctor.Id, doctor.Profile.FullName,

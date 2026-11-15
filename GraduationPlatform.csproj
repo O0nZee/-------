@@ -1,17 +1,27 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net8.0;net48</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>GraduationPlatform</RootNamespace>
     <AssemblyName>GraduationPlatform</AssemblyName>
     <Nullable>disable</Nullable>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <StartupObject>GraduationPlatform.Backend.ApiControllers.ApiServer</StartupObject>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
+    <OutputPath Condition="'$(BackendTestBuild)' == 'true'">$(MSBuildProjectDirectory)\tests\.runtime\build\GraduationPlatform\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="Backend\**\*.cs" />
+    <Compile Include="Program.cs" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.22" />
+    <Content Include="index.html" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Backend\Python\**\*.py" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Frontend\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="UI_UX\**\*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Remove="src\**;tests\**;data\**;.tools\**;artifacts\**" />
   </ItemGroup>
 
 </Project>

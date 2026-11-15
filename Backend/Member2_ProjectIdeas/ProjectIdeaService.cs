@@ -5,7 +5,7 @@ using GraduationPlatform.Common;
 
 namespace GraduationPlatform.Member2_ProjectIdeas
 {
-    public class ProjectIdeaService : IProjectIdeaService
+    public partial class ProjectIdeaService : IProjectIdeaService
     {
         private readonly Dictionary<string, ProjectIdea> _ideas = new Dictionary<string, ProjectIdea>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, ProjectArchive> _archive = new Dictionary<string, ProjectArchive>(StringComparer.OrdinalIgnoreCase);
@@ -53,8 +53,12 @@ namespace GraduationPlatform.Member2_ProjectIdeas
         {
             if (string.IsNullOrWhiteSpace(studentId)) return Result<ProjectIdea>.Fail("Submitter student ID is required");
             if (string.IsNullOrWhiteSpace(title)) return Result<ProjectIdea>.Fail("Project title is required");
-            if (string.IsNullOrWhiteSpace(description) || description.Length < 20)
+            if (title.Trim().Length > 200) return Result<ProjectIdea>.Fail("Project title is too long");
+            if (string.IsNullOrWhiteSpace(description) || description.Trim().Length < 20)
                 return Result<ProjectIdea>.Fail("Description must be detailed (at least 20 characters)");
+            if (description.Trim().Length > 10000 || (objectives?.Trim().Length ?? 0) > 10000 || (track?.Trim().Length ?? 0) > 100)
+                return Result<ProjectIdea>.Fail("Project text is too long");
+            if (!ValidTechnologies(technologies)) return Result<ProjectIdea>.Fail("Invalid project technologies");
 
             lock (_lock)
             {
@@ -63,7 +67,7 @@ namespace GraduationPlatform.Member2_ProjectIdeas
                     Title = title.Trim(),
                     Description = description.Trim(),
                     Objectives = objectives != null ? objectives.Trim() : string.Empty,
-                    Technologies = technologies ?? new List<string>(),
+                    Technologies = CopyTechnologies(technologies),
                     Track = track != null ? track.Trim() : "General",
                     SubmitterStudentId = studentId.Trim(),
                     TeamId = teamId,
@@ -78,49 +82,39 @@ namespace GraduationPlatform.Member2_ProjectIdeas
 
         public List<SimilarityResult> CheckSimilarity(string title, string description, List<string> technologies, string excludeIdeaId = null)
         {
-            var results = new List<SimilarityResult>();
-            technologies = technologies ?? new List<string>();
-
-            lock (_lock)
-            {
-                // 1. Compare with current submitted ideas
-                foreach (var idea in _ideas.Values)
-                {
-                    if (excludeIdeaId != null && idea.Id.Equals(excludeIdeaId, StringComparison.OrdinalIgnoreCase))
-                        continue;
-
-                    List<string> overlapping;
-                    double score = SimilarityEngine.CalculateWeightedSimilarity(
-                        title, description, technologies,
-                        idea.Title, idea.Description, idea.Technologies,
-                        out overlapping);
-
-                    if (score >= 0.25)
-                    {
-                        results.Add(BuildSimilarityResult(excludeIdeaId, idea.Id, idea.Title, "CurrentIdea", score, overlapping));
-                    }
-                }
-
-                // 2. Compare with past project archive
-                foreach (var arch in _archive.Values)
-                {
-                    List<string> overlapping;
-                    double score = SimilarityEngine.CalculateWeightedSimilarity(
-                        title, description, technologies,
-                        arch.Title, arch.Abstract, arch.Technologies,
-                        out overlapping);
-
-                    if (score >= 0.25)
-                    {
-                        results.Add(BuildSimilarityResult(excludeIdeaId, arch.Id, arch.Title, "Archive", score, overlapping));
-                    }
-                }
-            }
-
-            return results.OrderByDescending(r => r.SimilarityScore).ToList();
+            var query = new SimilarityQuery { Title = title, Description = description, Technologies = technologies, ExcludeIdeaId = excludeIdeaId };
+            return TextSimilarityAnalysis.Compare(query, GetSimilarityDocuments(excludeIdeaId));
         }
 
-        private static SimilarityResult BuildSimilarityResult(string sourceId, string matchId, string matchTitle, 
+        public List<SimilarityDocument> GetSimilarityDocuments(string excludeIdeaId = null)
+        {
+            lock (_lock)
+            {
+                string sourceTeamId = excludeIdeaId != null && _ideas.TryGetValue(excludeIdeaId, out var sourceIdea)
+                    ? sourceIdea.TeamId : null;
+                var documents = new List<SimilarityDocument>();
+                foreach (var idea in _ideas.Values.Where(i => !string.Equals(i.Id, excludeIdeaId, StringComparison.OrdinalIgnoreCase)))
+                {
+                    documents.Add(new SimilarityDocument
+                    {
+                        Id = idea.Id, Title = idea.Title, Description = idea.Description,
+                        Technologies = CopyTechnologies(idea.Technologies), SourceType = "CurrentIdea", TeamId = idea.TeamId
+                    });
+                }
+                foreach (var arch in _archive.Values)
+                {
+                    if (sourceTeamId != null && arch.TeamId == sourceTeamId) continue;
+                    documents.Add(new SimilarityDocument
+                    {
+                        Id = arch.Id, Title = arch.Title, Description = arch.Abstract,
+                        Technologies = CopyTechnologies(arch.Technologies), SourceType = "Archive", TeamId = arch.TeamId
+                    });
+                }
+                return documents;
+            }
+        }
+
+        internal static SimilarityResult BuildSimilarityResult(string sourceId, string matchId, string matchTitle,
             string sourceType, double score, List<string> overlapping)
         {
             SimilarityRiskLevel risk;
@@ -129,17 +123,17 @@ namespace GraduationPlatform.Member2_ProjectIdeas
             if (score >= 0.70)
             {
                 risk = SimilarityRiskLevel.High;
-                recommendation = "High similarity detected! Idea closely resembles existing project. Rejection or major scope change strongly advised.";
+                recommendation = "تشابه مرتفع؛ راجع الفروق في أهداف المشروع ونطاقه مع المشرف قبل الاعتماد.";
             }
             else if (score >= 0.40)
             {
                 risk = SimilarityRiskLevel.Moderate;
-                recommendation = "Moderate overlap detected. Students should clearly outline their unique contribution compared to this project.";
+                recommendation = "يوجد تشابه جزئي؛ وضّح إضافة مشروعك وما يميّزه.";
             }
             else
             {
                 risk = SimilarityRiskLevel.Low;
-                recommendation = "Low overlap. Acceptable novelty with minor common terminology.";
+                recommendation = "تشابه محدود في بعض المصطلحات أو التقنيات.";
             }
 
             return new SimilarityResult
@@ -155,11 +149,17 @@ namespace GraduationPlatform.Member2_ProjectIdeas
             };
         }
 
+        private static bool ValidTechnologies(List<string> values) => values == null
+            || (values.Count <= 20 && values.All(v => !string.IsNullOrWhiteSpace(v) && v.Trim().Length <= 60));
+
+        private static List<string> CopyTechnologies(List<string> values) => (values ?? new List<string>())
+            .Where(v => !string.IsNullOrWhiteSpace(v)).Select(v => v.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
         public Result<IdeaReview> ReviewIdea(string supervisorId, string ideaId, IdeaStatus decision, string feedback)
         {
             if (string.IsNullOrWhiteSpace(supervisorId)) return Result<IdeaReview>.Fail("Supervisor ID is required");
             if (string.IsNullOrWhiteSpace(ideaId)) return Result<IdeaReview>.Fail("Idea ID is required");
-            if (decision == IdeaStatus.PendingReview || decision == IdeaStatus.Draft)
+            if (decision != IdeaStatus.Approved && decision != IdeaStatus.Rejected && decision != IdeaStatus.ModificationRequested)
                 return Result<IdeaReview>.Fail("Decision must be Approved, Rejected, or ModificationRequested");
 
             lock (_lock)
@@ -189,6 +189,9 @@ namespace GraduationPlatform.Member2_ProjectIdeas
             string department, string track, List<string> technologies, string supervisorName, string grade)
         {
             if (string.IsNullOrWhiteSpace(title)) return Result<ProjectArchive>.Fail("Archive project title is required");
+            if (title.Trim().Length > 200 || (abstractText?.Trim().Length ?? 0) > 10000)
+                return Result<ProjectArchive>.Fail("Archive project text is too long");
+            if (!ValidTechnologies(technologies)) return Result<ProjectArchive>.Fail("Invalid project technologies");
 
             lock (_lock)
             {
@@ -199,7 +202,7 @@ namespace GraduationPlatform.Member2_ProjectIdeas
                     AcademicYear = academicYear ?? "2023-2024",
                     Department = department ?? "Computer Science",
                     Track = track ?? "General",
-                    Technologies = technologies ?? new List<string>(),
+                    Technologies = CopyTechnologies(technologies),
                     SupervisorName = supervisorName ?? "Academic Staff",
                     FinalGrade = grade ?? "A"
                 };

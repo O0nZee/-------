@@ -5,7 +5,7 @@ using GraduationPlatform.Common;
 
 namespace GraduationPlatform.Member4_ProjectTracking
 {
-    public class TrackingService : ITrackingService
+    public partial class TrackingService : ITrackingService
     {
         private readonly Dictionary<string, Milestone> _milestones = new Dictionary<string, Milestone>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, TaskItem> _tasks = new Dictionary<string, TaskItem>(StringComparer.OrdinalIgnoreCase);
@@ -40,6 +40,8 @@ namespace GraduationPlatform.Member4_ProjectTracking
             lock (_lock)
             {
                 DateTime now = DateTime.UtcNow;
+                var existing = GetMilestones(teamId);
+                if (existing.Count > 0) return Result<List<Milestone>>.Ok(existing, "Milestones already initialized");
                 var created = new List<Milestone>
                 {
                     CreateMilestone(teamId, "Phase 1: Project Proposal & SRS", "Requirements elicitation, problem formulation and supervisor approval", 1, now.AddDays(21)).Data,
@@ -58,11 +60,14 @@ namespace GraduationPlatform.Member4_ProjectTracking
             if (string.IsNullOrWhiteSpace(teamId)) return Result<TaskItem>.Fail("Team ID is required");
             if (string.IsNullOrWhiteSpace(title)) return Result<TaskItem>.Fail("Task title is required");
             if (dueDate < startDate) return Result<TaskItem>.Fail("Due date cannot be earlier than start date");
+            if (!Enum.IsDefined(typeof(TaskPriority), priority)) return Result<TaskItem>.Fail("Invalid task priority");
 
             lock (_lock)
             {
                 if (!string.IsNullOrEmpty(milestoneId) && !_milestones.ContainsKey(milestoneId))
                     return Result<TaskItem>.Fail("Milestone not found");
+                if (!string.IsNullOrEmpty(milestoneId) && !_milestones[milestoneId].TeamId.Equals(teamId.Trim(), StringComparison.OrdinalIgnoreCase))
+                    return Result<TaskItem>.Fail("Milestone belongs to another team");
 
                 var task = new TaskItem
                 {
@@ -78,6 +83,7 @@ namespace GraduationPlatform.Member4_ProjectTracking
                 };
 
                 _tasks[task.Id] = task;
+                if (!string.IsNullOrEmpty(milestoneId)) _milestones[milestoneId].IsCompleted = false;
                 return Result<TaskItem>.Ok(task, "Task created successfully");
             }
         }
@@ -111,6 +117,7 @@ namespace GraduationPlatform.Member4_ProjectTracking
         public Result UpdateTaskStatus(string taskId, TaskItemStatus newStatus)
         {
             if (string.IsNullOrWhiteSpace(taskId)) return Result.Fail("Task ID is required");
+            if (!Enum.IsDefined(typeof(TaskItemStatus), newStatus)) return Result.Fail("Invalid task status");
 
             lock (_lock)
             {

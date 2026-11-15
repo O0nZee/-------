@@ -44,6 +44,7 @@ namespace GraduationPlatform.Member2_ProjectIdeas
 
     public class ProjectArchive
     {
+        public string TeamId { get; set; }
         public string Id { get; set; }
         public string Title { get; set; }
         public string Abstract { get; set; }
@@ -92,5 +93,29 @@ namespace GraduationPlatform.Member2_ProjectIdeas
         {
             OverlappingKeywords = new List<string>();
         }
+    }
+
+    public class TrackRecommendation
+    {
+        public string Track { get; set; } = string.Empty;
+        public string ArabicName { get; set; } = string.Empty;
+        public double Confidence { get; set; }
+        public List<string> MatchedKeywords { get; set; } = new List<string>();
+    }
+
+    public class TrackClassificationResult
+    {
+        public string PrimaryTrack { get; set; } = string.Empty;
+        public List<TrackRecommendation> RecommendedTracks { get; set; } = new List<TrackRecommendation>();
+        public string Engine { get; set; } = string.Empty;
+    }
+
+    public class IdeaQualityEvaluationResult
+    {
+        public int Score { get; set; }
+        public string Grade { get; set; } = string.Empty;
+        public List<string> Strengths { get; set; } = new List<string>();
+        public List<string> Recommendations { get; set; } = new List<string>();
+        public string Engine { get; set; } = string.Empty;
     }
 }

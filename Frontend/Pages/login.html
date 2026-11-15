@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="سجّل الدخول إلى منصة مشروعات التخرج باسم المستخدم وكلمة المرور.">
+    <meta name="theme-color" content="#1e40af">
+    <title>تسجيل الدخول | منصة مشروعات التخرج</title>
+    <link rel="icon" href="/UI_UX/Assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/UI_UX/Styles/design-system.css">
+    <link rel="stylesheet" href="/UI_UX/Styles/components.css">
+    <link rel="stylesheet" href="/UI_UX/Styles/application.css">
+    <link rel="stylesheet" href="/UI_UX/Styles/login.css">
+    <script src="/Frontend/Scripts/apiService.js" defer></script>
+    <script src="/Frontend/Scripts/authController.js" defer></script>
+</head>
+<body class="login-page" data-login-first="true">
+    <header class="login-brand">
+        <a class="brand" href="/" aria-label="منصة مشروعات التخرج — تسجيل الدخول">
+            <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m2 9 10-5 10 5-10 5L2 9Z"/><path d="M6 11v6c3 3 9 3 12 0v-6M22 9v7"/></svg></span>
+            <span>منصة مشروعات التخرج<small>من الفكرة إلى الإنجاز</small></span>
+        </a>
+    </header>
+    <main class="login-main">
+        <section class="auth-card ui-card" id="account" aria-label="حسابك في المنصة">
+            <div id="authMessage" class="message-box" role="status" aria-live="polite" hidden></div>
+            <div id="localEntryPanel" hidden>
+                <h1>افتح المنصة</h1>
+                <p class="muted">شغّل <bdi>Start.cmd</bdi> ثم افتح الموقع لتسجيل الدخول.</p>
+                <a class="ui-btn" href="http://localhost:5000/">فتح المنصة</a>
+            </div>
+            <div id="signedInPanel" hidden>
+                <h1 id="signedInName"></h1>
+                <a id="continueLink" class="ui-btn">الانتقال إلى حسابك</a>
+                <button id="switchAccount" class="text-button" type="button">تبديل الحساب</button>
+            </div>
+            <div id="authForms">
+                <form id="loginForm" data-auth-form="login">
+                    <div class="login-heading"><span class="eyebrow">أهلًا بعودتك</span><h1>تسجيل الدخول</h1><p class="muted">أدخل بيانات حسابك للمتابعة إلى صفحتك.</p></div>
+                    <label for="loginUsername">اسم المستخدم<input id="loginUsername" class="ui-input" name="usernameOrEmail" autocomplete="username" autocapitalize="none" spellcheck="false" dir="auto" placeholder="أدخل اسم المستخدم" required maxlength="50"></label>
+                    <label for="loginPassword">كلمة المرور<input id="loginPassword" class="ui-input" name="password" type="password" autocomplete="current-password" placeholder="أدخل كلمة المرور" required maxlength="128"></label>
+                    <button class="text-button forgot-link" type="button" data-auth-tab="forgot">نسيت كلمة المرور؟</button>
+                    <button class="ui-btn login-submit" type="submit">تسجيل الدخول</button>
+                    <p class="login-register">ليس لديك حساب؟ <button class="text-button" type="button" data-auth-tab="register">إنشاء حساب طالب</button></p>
+                </form>
+                <form id="registerForm" data-auth-form="register" hidden>
+                    <div class="login-heading"><h1>إنشاء حساب طالب</h1><p class="muted">سجّل بياناتك وابدأ رحلة مشروعك.</p></div>
+                    <label for="registerFullName">الاسم الكامل<input id="registerFullName" class="ui-input" name="fullName" autocomplete="name" required maxlength="100"></label>
+                    <label for="registerUsername">اسم المستخدم<input id="registerUsername" class="ui-input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" dir="auto" required minlength="3" maxlength="50"></label>
+                    <label for="registerEmail">البريد الإلكتروني<input id="registerEmail" class="ui-input" name="email" type="email" autocomplete="email" dir="ltr" required maxlength="254"></label>
+                    <div class="form-row">
+                        <label for="registerDepartment">القسم<input id="registerDepartment" class="ui-input" name="department" required maxlength="100"></label>
+                        <label for="registerAcademicId">الرقم الأكاديمي<input id="registerAcademicId" class="ui-input" name="academicId" dir="auto" maxlength="50" placeholder="اختياري"></label>
+                    </div>
+                    <label for="registerPassword">كلمة المرور<input id="registerPassword" class="ui-input" name="password" type="password" autocomplete="new-password" aria-describedby="registerPasswordHint" required minlength="8" maxlength="128"><small id="registerPasswordHint" class="muted">٨ أحرف على الأقل.</small></label>
+                    <label for="registerConfirmPassword">تأكيد كلمة المرور<input id="registerConfirmPassword" class="ui-input" name="confirmPassword" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label>
+                    <button class="ui-btn" type="submit">إنشاء حساب الطالب</button>
+                    <button class="text-button" type="button" data-auth-tab="login">العودة لتسجيل الدخول</button>
+                </form>
+                <form id="forgotForm" data-auth-form="forgot" hidden>
+                    <div class="login-heading"><h1>استعادة كلمة المرور</h1><p class="muted">أدخل البريد المرتبط بحسابك للحصول على رابط الاستعادة.</p></div>
+                    <label for="forgotEmail">البريد الإلكتروني<input id="forgotEmail" class="ui-input" name="email" type="email" autocomplete="email" dir="ltr" required maxlength="254"></label>
+                    <button class="ui-btn" type="submit">طلب رابط الاستعادة</button>
+                    <button class="text-button" type="button" data-auth-tab="login">العودة لتسجيل الدخول</button>
+                </form>
+            </div>
+            <form id="resetForm" data-auth-form="reset" hidden>
+                <div class="login-heading"><h1>كلمة مرور جديدة</h1><p class="muted">اختر كلمة مرور من ٨ أحرف على الأقل.</p></div>
+                <label for="resetPassword">كلمة المرور الجديدة<input id="resetPassword" class="ui-input" name="newPassword" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label>
+                <label for="resetConfirmPassword">تأكيد كلمة المرور<input id="resetConfirmPassword" class="ui-input" name="confirmPassword" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label>
+                <button class="ui-btn" type="submit">حفظ كلمة المرور</button>
+            </form>
+        </section>
+        <p class="login-note">حساب واحد، وصفحتك المناسبة تلقائيًا.</p>
+    </main>
+    <footer class="login-footer">منصة مشروعات التخرج</footer>
+</body>
+</html>
