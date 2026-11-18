@@ -15,6 +15,7 @@
   <ItemGroup>
     <Compile Include="Backend\**\*.cs" />
     <Compile Include="Program.cs" />
+    <EmbeddedResource Include="data base\schema.sql" LogicalName="GraduationPlatform.Database.Schema.sql" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.22" />
     <Content Include="index.html" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Backend\Python\**\*.py" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

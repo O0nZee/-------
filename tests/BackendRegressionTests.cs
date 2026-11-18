@@ -6,6 +6,7 @@ using GraduationPlatform.Infrastructure;
 using GraduationPlatform.Member1_UserManagement;
 using GraduationPlatform.Member2_ProjectIdeas;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Data.Sqlite;
 
 namespace GraduationPlatform.Tests;
 
@@ -101,6 +102,7 @@ public static class BackendRegressionTests
             Throws<InvalidOperationException>(() => new SimilarityService(new SimilarityOptions { Engine = "Unknown" }, Root));
         });
         Test("Office containers are validated and rejected uploads leave no records", () => OfficeFiles().GetAwaiter().GetResult());
+        Test("Student SQL profiles persist, update and migrate on restart", StudentSqlPersistence);
         return passed;
     }
 
@@ -282,6 +284,75 @@ public static class BackendRegressionTests
         Assert(runtime.Submissions.Count == 1, "Office document container accepted");
         runtime.Mutate(admin.Id, "submission.review.test", null, r => r.ReviewSubmission(admin, r.Submissions[0].Id, new ReviewRequest { Decision = "approved", Grade = 95, Feedback = "" }));
         Assert(runtime.Submissions[0].Decision == "Approved", "Canonical case-insensitive review decision");
+    }
+
+    private static void StudentSqlPersistence()
+    {
+        string data = Path.Combine(Root, "tests", ".runtime", "students-" + Guid.NewGuid().ToString("N"));
+        var options = new PlatformOptions { DataDirectory = data, DemoData = false };
+        string studentId = null;
+        using (var runtime = new PlatformRuntime(options, Root, "RegressionAdmin!123"))
+        {
+            runtime.Mutate(null, "user.register.test", null, r =>
+            {
+                var student = PlatformRuntime.Require(r.Auth.Register("sql_student", "sql@example.test", "StrongPassword!123",
+                    UserRoleType.Student, "طالب SQL", "علوم الحاسب", "ST-SQL-001"));
+                studentId = student.Id;
+                PlatformRuntime.Require(r.Auth.Register("sql_supervisor", "supervisor@example.test", "StrongPassword!123",
+                    UserRoleType.Supervisor, "مشرف SQL", "علوم الحاسب", "FAC-SQL-001"));
+                return null;
+            });
+            runtime.Mutate(studentId, "user.profile.test", studentId, r =>
+            {
+                PlatformRuntime.Require(r.Auth.UpdateProfile(studentId, "أحمد O'Neil", "نظم المعلومات", "01012345678", "سطر أول\nسطر ثانٍ"));
+                return null;
+            });
+            CheckStudentSql(runtime.Store.DatabasePath, studentId);
+            CheckStudentSql(runtime.Store.CreateBackup(), studentId);
+        }
+        // An older application database has users but no student view yet.
+        string database = Path.Combine(data, "graduation.db");
+        using (var db = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = database, Pooling = false }.ToString()))
+        {
+            db.Open(); using var command = db.CreateCommand();
+            command.CommandText = "DROP VIEW students"; command.ExecuteNonQuery();
+        }
+        using (var restarted = new PlatformRuntime(options, Root))
+        {
+            Assert(restarted.Auth.Login("sql_student", "StrongPassword!123").IsSuccess, "Student login survives migration and restart");
+            Assert(restarted.Auth.GetUserById(studentId).Profile.Department == "نظم المعلومات", "Profile update survives restart");
+            CheckStudentSql(restarted.Store.DatabasePath, studentId);
+        }
+    }
+
+    private static void CheckStudentSql(string database, string studentId)
+    {
+        using var db = new SqliteConnection(new SqliteConnectionStringBuilder
+            { DataSource = database, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString());
+        db.Open();
+        using var command = db.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM students";
+        Assert(Convert.ToInt32(command.ExecuteScalar()) == 1, "Student view excludes admin and supervisor accounts");
+        command.CommandText = "SELECT id,full_name,department,phone,academic_identifier,bio FROM students";
+        using (var reader = command.ExecuteReader())
+        {
+            Assert(reader.Read() && reader.GetString(0) == studentId && reader.GetString(1) == "أحمد O'Neil"
+                && reader.GetString(2) == "نظم المعلومات" && reader.GetString(3) == "01012345678"
+                && reader.GetString(4) == "ST-SQL-001" && reader.GetString(5) == "سطر أول\nسطر ثانٍ", "Saved student SQL fields");
+        }
+        command.CommandText = "SELECT name FROM pragma_table_info('students')";
+        using (var reader = command.ExecuteReader())
+        {
+            var columns = new List<string>();
+            while (reader.Read()) columns.Add(reader.GetString(0));
+            Assert(columns.SequenceEqual(new[] { "id", "username", "email", "full_name", "department", "phone",
+                "academic_identifier", "bio", "is_active", "created_at", "updated_at" }), "Only profile fields are exposed");
+        }
+        command.CommandText = "PRAGMA integrity_check";
+        Assert((string)command.ExecuteScalar() == "ok", "Database integrity after profile persistence");
+        command.CommandText = "PRAGMA foreign_key_check";
+        using var foreignKeys = command.ExecuteReader();
+        Assert(!foreignKeys.Read(), "Existing relationships stay valid");
     }
 
     private static void Assert(bool condition, string message)
