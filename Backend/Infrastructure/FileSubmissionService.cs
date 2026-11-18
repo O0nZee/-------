@@ -19,6 +19,48 @@ public sealed class FileSubmissionService
     };
     public FileSubmissionService(PlatformRuntime runtime) { _runtime=runtime; }
 
+    public async Task<string> SaveStudyResourceAsync(string actorId, string courseId, string kind, string title, string examYear, IFormFile file, CancellationToken token)
+    {
+        title = Input.Text(title, "عنوان الملف", 200);
+        if (kind is not ("Material" or "Summary" or "Exam")) throw new PlatformException("نوع المحتوى غير صالح");
+        examYear = kind == "Exam" && !string.IsNullOrWhiteSpace(examYear) ? Input.AcademicYear(examYear) : "";
+        _runtime.Read(r => { var actor = r.Actor(actorId); PlatformRuntime.RequireCollegeAdmin(actor); r.AccessStudyCourse(actor, courseId); return true; });
+        if (file == null || file.Length == 0) throw new PlatformException("يرجى اختيار ملف غير فارغ");
+        long limit = (long)_runtime.Options.MaxUploadMegabytes * 1024 * 1024;
+        if (file.Length > limit) throw new PlatformException("الملف أكبر من الحد المسموح", 413, "file_too_large");
+        string name = Input.Text(file.FileName.Replace('\\', '/').Split('/').Last(), "اسم الملف", 150);
+        string extension = Path.GetExtension(name);
+        if (!Types.TryGetValue(extension, out var contentType)) throw new PlatformException("صيغة الملف غير مدعومة");
+        var item = new StudyResource { CourseId = courseId, Kind = kind, Title = title, ExamYear = examYear,
+            UploadedBy = actorId, OriginalFileName = name, ContentType = contentType };
+        string path = Path.Combine(_runtime.UploadDirectory, item.Id + ".bin");
+        try
+        {
+            using (var source = file.OpenReadStream())
+            using (var target = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None, 65536, true))
+            using (var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256))
+            {
+                var buffer = new byte[65536]; int count;
+                while ((count = await source.ReadAsync(buffer, token)) > 0)
+                {
+                    item.SizeBytes += count;
+                    if (item.SizeBytes > limit) throw new PlatformException("الملف أكبر من الحد المسموح", 413, "file_too_large");
+                    hash.AppendData(buffer, 0, count); await target.WriteAsync(buffer.AsMemory(0, count), token);
+                }
+                await target.FlushAsync(token); target.Flush(true);
+                item.Sha256 = Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant();
+            }
+            if (item.SizeBytes == 0) throw new PlatformException("يرجى اختيار ملف غير فارغ");
+            ValidateSignature(path, extension);
+            return _runtime.Mutate(actorId, "study.resource.upload", item.Id, r =>
+            {
+                var actor = r.Actor(actorId); PlatformRuntime.RequireCollegeAdmin(actor); r.AccessStudyCourse(actor, courseId);
+                r.StudyResources.Add(item); return PlatformRuntime.StudyResourceView(item);
+            }, "تم رفع الملف وإضافته للمادة");
+        }
+        catch { if (File.Exists(path)) File.Delete(path); throw; }
+    }
+
     public async Task<string> SaveAsync(string actorId,string teamId,string milestoneId,string title,IFormFile file,CancellationToken cancellationToken)
     {
         title=Input.Text(title,"عنوان التسليم",200);

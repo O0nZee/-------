@@ -52,6 +52,7 @@ namespace GraduationPlatform.Member1_UserManagement
         public string UserId { get; set; }
         public string FullName { get; set; }
         public string Department { get; set; }
+        public int? StudyYear { get; set; }
         public string Phone { get; set; }
         public string AcademicIdentifier { get; set; } // Student ID or Academic Title (Dr., Prof.)
         public string Bio { get; set; }

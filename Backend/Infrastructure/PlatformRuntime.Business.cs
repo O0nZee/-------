@@ -13,8 +13,11 @@ public sealed partial class PlatformRuntime
 {
     public User RegisterUser(RegisterRequest request,UserRoleType role)
     {
+        string department = role == UserRoleType.Student ? ValidateStudyDepartment(request.Department) : Input.Text(request.Department,"القسم",100);
+        int? studyYear = role == UserRoleType.Student ? ValidateStudyYear(request.StudyYear) : null;
         var user=Require(Auth.Register(Input.Username(request.Username),Input.Text(request.Email,"البريد الإلكتروني",254),Input.Password(request.Password),role,
-            Input.Text(request.FullName,"الاسم الكامل",100),Input.Text(request.Department,"القسم",100),Input.Text(request.AcademicId,"الرقم الأكاديمي",50,false)));
+            Input.Text(request.FullName,"الاسم الكامل",100),department,Input.Text(request.AcademicId,"الرقم الأكاديمي",50,false)));
+        user.Profile.StudyYear = studyYear;
         if(role==UserRoleType.Supervisor) Require(Teams.RegisterSupervisor(user.Id,user.Profile.FullName,"د.",user.Profile.Department,"",Options.MaxSupervisorTeams));
         Notify(user.Id,"مرحبًا بك في المنصة","تم إنشاء حسابك بنجاح. يمكنك متابعة مشروع التخرج من حسابك.","Welcome");
         return user;

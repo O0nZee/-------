@@ -11,8 +11,8 @@
     <link rel="stylesheet" href="/UI_UX/Styles/components.css">
     <link rel="stylesheet" href="/UI_UX/Styles/application.css">
     <link rel="stylesheet" href="/UI_UX/Styles/login.css">
-    <script src="/Frontend/Scripts/apiService.js" defer></script>
-    <script src="/Frontend/Scripts/authController.js" defer></script>
+    <script src="/Frontend/Scripts/apiService.js?v=20261118-registration-2" defer></script>
+    <script src="/Frontend/Scripts/authController.js?v=20261118-registration-2" defer></script>
 </head>
 <body class="login-page" data-login-first="true">
     <header class="login-brand">
@@ -44,14 +44,15 @@
                     <p class="login-register">ليس لديك حساب؟ <button class="text-button" type="button" data-auth-tab="register">إنشاء حساب طالب</button></p>
                 </form>
                 <form id="registerForm" data-auth-form="register" hidden>
-                    <div class="login-heading"><h1>إنشاء حساب طالب</h1><p class="muted">سجّل بياناتك وابدأ رحلة مشروعك.</p></div>
+                    <div class="login-heading"><h1>إنشاء حساب طالب</h1><p class="muted">اختَر قسمك وفرقتك للوصول إلى موادك وملخصاتك والامتحانات السابقة.</p></div>
                     <label for="registerFullName">الاسم الكامل<input id="registerFullName" class="ui-input" name="fullName" autocomplete="name" required maxlength="100"></label>
                     <label for="registerUsername">اسم المستخدم<input id="registerUsername" class="ui-input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" dir="auto" required minlength="3" maxlength="50"></label>
                     <label for="registerEmail">البريد الإلكتروني<input id="registerEmail" class="ui-input" name="email" type="email" autocomplete="email" dir="ltr" required maxlength="254"></label>
                     <div class="form-row">
-                        <label for="registerDepartment">القسم<input id="registerDepartment" class="ui-input" name="department" required maxlength="100"></label>
-                        <label for="registerAcademicId">الرقم الأكاديمي<input id="registerAcademicId" class="ui-input" name="academicId" dir="auto" maxlength="50" placeholder="اختياري"></label>
+                        <label for="registerDepartment">القسم<select id="registerDepartment" class="ui-input" name="department" required><option value="">اختر القسم</option><option value="حاسب آلي إنجليزي">حاسب آلي إنجليزي</option><option value="حاسب آلي">حاسب آلي</option><option value="تكنولوجيا ذوي الاحتياجات الخاصة">تكنولوجيا ذوي الاحتياجات الخاصة</option><option value="تكنولوجيا">تكنولوجيا</option><option value="مسرح">مسرح</option><option value="إعلام">إعلام</option><option value="فنية">فنية</option><option value="موسيقى">موسيقى</option></select></label>
+                        <label for="registerStudyYear">الفرقة الدراسية<select id="registerStudyYear" class="ui-input" name="studyYear" required><option value="">اختر الفرقة</option><option value="1">الفرقة الأولى</option><option value="2">الفرقة الثانية</option><option value="3">الفرقة الثالثة</option><option value="4">الفرقة الرابعة</option></select></label>
                     </div>
+                    <label for="registerAcademicId">الرقم الأكاديمي<input id="registerAcademicId" class="ui-input" name="academicId" dir="auto" maxlength="50" placeholder="اختياري"></label>
                     <label for="registerPassword">كلمة المرور<input id="registerPassword" class="ui-input" name="password" type="password" autocomplete="new-password" aria-describedby="registerPasswordHint" required minlength="8" maxlength="128"><small id="registerPasswordHint" class="muted">٨ أحرف على الأقل.</small></label>
                     <label for="registerConfirmPassword">تأكيد كلمة المرور<input id="registerConfirmPassword" class="ui-input" name="confirmPassword" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label>
                     <button class="ui-btn" type="submit">إنشاء حساب الطالب</button>

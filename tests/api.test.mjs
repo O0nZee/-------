@@ -51,9 +51,9 @@ class Client {
     }
     async session() { const result = await this.request('GET', '/auth/session'); this.csrf = result.data.csrfToken; this.user = result.data.user; return this.user; }
     async login(username, password) { await this.session(); await this.request('POST', '/auth/login', { usernameOrEmail: username, password }); return this.session(); }
-    async register(prefix, role = 'Student') {
+    async register(prefix, role = 'Student', department = 'حاسب آلي', studyYear = 2) {
         await this.session(); const username = prefix + '_' + run, email = `${prefix}-${run}@tests.local`;
-        await this.request('POST', '/auth/register', { username, email, password: 'StudentPassword!123', fullName: prefix + ' طالب اختبار', department: 'علوم الحاسب', academicId: prefix + '-01', role });
+        await this.request('POST', '/auth/register', { username, email, password: 'StudentPassword!123', fullName: prefix + ' طالب اختبار', department, studyYear, academicId: prefix + '-01', role });
         await this.session(); return this.user;
     }
 }
@@ -64,7 +64,7 @@ async function restoreBackup(destination, expected = 0) {
     const [code] = await once(restoration, 'exit');
     if (expected === 0) assert.equal(code, 0, output); else assert.notEqual(code, 0, 'An existing directory must not be overwritten');
 }
-let owner, member, outsider, doctorUser, secondDoctorUser, team, otherTeam, milestones, invitation, idea, task, submissions = [], backupName;
+let studyCourse, studyFiles = [], owner, member, outsider, doctorUser, secondDoctorUser, team, otherTeam, milestones, invitation, idea, task, submissions = [], backupName;
 const admin = new Client(), leader = new Client(), colleague = new Client(), unrelated = new Client(), doctor = new Client(), secondDoctor = new Client(), publicClient = new Client();
 try {
     await start();
@@ -87,8 +87,70 @@ try {
         assert.equal((await admin.request('GET', '/archive')).data.length, 0, 'A non-demo database must not contain sample archive projects');
     });
     await test('Public registration cannot choose administrator or supervisor privileges', async () => {
-        owner = await leader.register('leader', 'Admin'); member = await colleague.register('member', 'Supervisor'); outsider = await unrelated.register('outsider');
+        owner = await leader.register('leader', 'Admin'); member = await colleague.register('member', 'Supervisor'); outsider = await unrelated.register('outsider', 'Student', 'إعلام', 2);
         assert.equal(owner.role, 'Student'); assert.equal(member.role, 'Student'); await leader.request('GET', '/admin/users', undefined, 403);
+    });
+    await test('Registration requires a supported department and a study year from one to four', async () => {
+        const catalog = (await publicClient.request('GET', '/study/catalog')).data;
+        assert.deepEqual(catalog.departments.map(d => d.name), ['حاسب آلي إنجليزي', 'حاسب آلي', 'تكنولوجيا ذوي الاحتياجات الخاصة', 'تكنولوجيا', 'مسرح', 'إعلام', 'فنية', 'موسيقى']);
+        assert.deepEqual(catalog.years.map(y => y.value), [1, 2, 3, 4]);
+        const values = { username: 'invalid_' + run, email: `invalid-${run}@tests.local`, password: 'StrongPassword!123', fullName: 'طالب', department: 'حاسب آلي', studyYear: 2 };
+        for (const invalid of [{ studyYear: 5 }, { studyYear: null }, { department: 'قسم غير موجود' }])
+            await publicClient.request('POST', '/auth/register', { ...values, ...invalid }, 400);
+        assert.equal((await leader.request('GET', '/profile')).data.profile.studyYear, 2);
+    });
+    await test('Study courses are scoped to the saved department and year and only administrators edit them', async () => {
+        const values = { name: 'قواعد البيانات', departmentId: 'computer-ar', studyYear: 2, semester: 1, description: 'مادة اختبار' };
+        studyCourse = (await admin.request('POST', '/admin/study/courses', values)).data;
+        await admin.request('POST', '/admin/study/courses', values, 409);
+        await admin.request('POST', '/admin/study/courses', { ...values, studyYear: 5 }, 400);
+        await admin.request('POST', '/admin/study/courses', { ...values, departmentId: 'media' });
+        await admin.request('POST', '/admin/study/courses', { ...values, studyYear: 3 });
+        await leader.request('POST', '/admin/study/courses', { ...values, name: 'ممنوعة' }, 403);
+        const library = (await leader.request('GET', '/study/library?departmentId=media&studyYear=3')).data;
+        assert.equal(library.department.id, 'computer-ar'); assert.equal(library.studyYear, 2);
+        assert.deepEqual(library.courses.map(c => c.id), [studyCourse.id]);
+        assert.equal((await unrelated.request('GET', '/study/library')).data.courses[0].departmentId, 'media');
+    });
+    await test('Materials, summaries and previous exams upload and download inside the correct student scope', async () => {
+        for (const kind of ['Material', 'Summary', 'Exam']) {
+            const form = new FormData(); form.set('courseId', studyCourse.id); form.set('kind', kind); form.set('title', 'ملف ' + kind);
+            form.set('examYear', kind === 'Exam' ? '٢٠٢٥-٢٠٢٦' : '');
+            form.set('file', new Blob(['Study file ' + kind], { type: 'text/plain' }), kind + '.txt');
+            const item = (await admin.request('POST', '/admin/study/resources', form)).data; studyFiles.push(item);
+            assert.equal(await (await leader.request('GET', item.downloadUrl.slice(4), undefined, 200, true)).text(), 'Study file ' + kind);
+            await unrelated.request('GET', item.downloadUrl.slice(4), undefined, 403);
+            await publicClient.request('GET', item.downloadUrl.slice(4), undefined, 401);
+        }
+        const library = (await leader.request('GET', '/study/library')).data;
+        assert.equal(library.courses[0].resources.length, 3);
+        assert.equal(library.courses[0].resources.find(r => r.kind === 'Exam').examYear, '2025-2026');
+        const invalid = new FormData(); invalid.set('courseId', studyCourse.id); invalid.set('kind', 'Summary'); invalid.set('title', 'ملف مزيف');
+        invalid.set('file', new Blob(['fake PDF']), 'fake.pdf');
+        await admin.request('POST', '/admin/study/resources', invalid, 400);
+        assert.equal((await leader.request('GET', '/study/library')).data.courses[0].resources.length, 3);
+    });
+    await test('Changing the profile updates the academic page and rejects invalid years', async () => {
+        const profile = (await leader.request('GET', '/profile')).data.profile;
+        const change = { fullName: profile.fullName, department: 'إعلام', studyYear: 2, phone: '', bio: '' };
+        await leader.request('PATCH', '/profile', { ...change, studyYear: 0 }, 400);
+        await leader.request('PATCH', '/profile', change);
+        assert.equal((await leader.request('GET', '/study/library')).data.courses[0].departmentId, 'media');
+        await leader.request('GET', studyFiles[0].downloadUrl.slice(4), undefined, 403);
+        await leader.request('PATCH', '/profile', { ...change, department: 'حاسب آلي' });
+    });
+    await test('Course edits and resource removal persist and remain administration-only', async () => {
+        const course = (await admin.request('POST', '/admin/study/courses', { name: 'مادة مؤقتة', departmentId: 'art', studyYear: 4, semester: 2 })).data;
+        await leader.request('DELETE', '/admin/study/courses/' + course.id, undefined, 403);
+        await admin.request('PUT', '/admin/study/courses/' + course.id, { name: 'مادة بعد التعديل', departmentId: 'art', studyYear: 4, semester: 1 });
+        assert.equal((await admin.request('GET', '/study/library?departmentId=art&studyYear=4')).data.courses[0].semester, 1);
+        const form = new FormData(); form.set('courseId', course.id); form.set('kind', 'Summary'); form.set('title', 'ملخص مؤقت');
+        form.set('file', new Blob(['Temporary study summary']), 'temporary.txt');
+        const item = (await admin.request('POST', '/admin/study/resources', form)).data;
+        await admin.request('DELETE', '/admin/study/resources/' + item.id);
+        await admin.request('GET', item.downloadUrl.slice(4), undefined, 404);
+        await admin.request('DELETE', '/admin/study/courses/' + course.id);
+        assert.equal((await admin.request('GET', '/study/library?departmentId=art&studyYear=4')).data.courses.length, 0);
     });
     await test('Administration creates supervisor accounts and their linked profiles', async () => {
         doctorUser = (await admin.request('POST', '/admin/users', { username: 'doctor_' + run, email: `doctor-${run}@tests.local`, password: 'DoctorPassword!123', fullName: 'مشرف اختبار', department: 'علوم الحاسب', role: 'Supervisor' })).data;
@@ -248,7 +310,7 @@ try {
     });
     await test('Administrator profile edits synchronize member, assignment, and supervisor details', async () => {
         const memberName = 'طالب اختبار بعد تعديل الإدارة';
-        await admin.request('PATCH', '/admin/users/' + member.id, { fullName: memberName, department: 'هندسة الحاسب' });
+        await admin.request('PATCH', '/admin/users/' + member.id, { fullName: memberName, department: 'حاسب آلي' });
         await admin.request('PATCH', '/admin/users/' + doctorUser.id, { fullName: 'مشرف بعد تعديل الإدارة', department: 'هندسة الحاسب' });
         const detail = (await leader.request('GET', '/teams/' + team.id)).data;
         assert.equal(detail.team.members.find(value => value.studentId === member.id).memberName, memberName);
@@ -355,6 +417,9 @@ try {
         assert.deepEqual((await doctor.request('GET', '/profile')).data.permissions, allSupervisorPermissions);
         assert.equal((await admin.request('GET', `/admin/supervisors/${doctorUser.id}/permissions`)).data.updatedBy, admin.user.id);
         const detail = (await leader.request('GET', '/teams/' + team.id)).data;
+        assert.equal((await leader.request('GET', '/profile')).data.profile.studyYear, 2);
+        assert.equal((await leader.request('GET', '/study/library')).data.courses[0].resources.length, 3);
+        assert.equal(await (await leader.request('GET', studyFiles[0].downloadUrl.slice(4), undefined, 200, true)).text(), 'Study file Material');
         assert.equal(detail.team.isArchived, true); assert.equal(detail.team.grade, '92.5'); assert.equal(detail.submissions.length, 4); assert.equal(detail.tasks.length, 4);
         assert.equal(await (await colleague.request('GET', `/submissions/${submissions[0].id}/download`, undefined, 200, true)).text(), 'Phase report 1');
     });
@@ -363,7 +428,7 @@ try {
         await admin.request('PATCH', '/admin/users/' + admin.user.id, { isActive: false }, 400);
     });
     await test('Changing a role removes old supervisory grants and cannot restore them implicitly', async () => {
-        await admin.request('PATCH', `/admin/users/${secondDoctorUser.id}`, { role: 'Student' });
+        await admin.request('PATCH', `/admin/users/${secondDoctorUser.id}`, { role: 'Student', department: 'حاسب آلي', studyYear: 2 });
         await secondDoctor.request('GET', '/profile', undefined, 401);
         await admin.request('PATCH', `/admin/users/${secondDoctorUser.id}`, { role: 'Supervisor' });
         await secondDoctor.login(secondDoctorUser.username, 'DoctorPassword!123');
@@ -397,6 +462,8 @@ try {
         const detail = (await restoredStudent.request('GET', '/teams/' + team.id)).data;
         assert.equal(detail.team.grade, '92.5'); assert.equal(detail.tasks.length, 4); assert.equal(detail.submissions.length, 4);
         assert.equal(await (await restoredStudent.request('GET', `/submissions/${submissions[0].id}/download`, undefined, 200, true)).text(), 'Phase report 1');
+        assert.equal((await restoredStudent.request('GET', '/study/library')).data.courses[0].resources.length, 3);
+        assert.equal(await (await restoredStudent.request('GET', studyFiles[1].downloadUrl.slice(4), undefined, 200, true)).text(), 'Study file Summary');
         assert.equal((await admin.request('GET', '/auth/session')).data.user.role, 'Admin', 'Backed-up authentication keys must keep the administrator session valid');
     });
     process.stdout.write(`\n${passed} API acceptance tests passed. Database: ${data}\n`);

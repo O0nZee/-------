@@ -15,6 +15,7 @@ public sealed class PlatformOptions
     public int MaxSupervisorTeams { get; set; } = 3;
     public int MaxUploadMegabytes { get; set; } = 10;
     public bool DemoData { get; set; }
+    public bool UseHttpsProxy { get; set; }
 }
 
 public static class PlatformJson
@@ -45,6 +46,8 @@ public sealed class PlatformSnapshot
     public List<PlatformNotification> Notifications { get; set; } = new();
     public List<MailRecord> Mail { get; set; } = new();
     public List<AuditRecord> Audit { get; set; } = new();
+    public List<StudyCourse> StudyCourses { get; set; } = new();
+    public List<StudyResource> StudyResources { get; set; } = new();
 }
 
 public sealed class SubmissionReview

@@ -7,7 +7,7 @@ import tempfile
 
 
 COLUMNS = (
-    'id', 'username', 'email', 'full_name', 'department', 'phone',
+    'id', 'username', 'email', 'full_name', 'department', 'study_year', 'phone',
     'academic_identifier', 'bio', 'is_active', 'created_at', 'updated_at',
 )
 
@@ -17,6 +17,7 @@ EXPORT_SCHEMA = '''CREATE TABLE IF NOT EXISTS student_records (
     email TEXT NOT NULL UNIQUE COLLATE NOCASE,
     full_name TEXT,
     department TEXT,
+    study_year INTEGER,
     phone TEXT,
     academic_identifier TEXT,
     bio TEXT,

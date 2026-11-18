@@ -20,6 +20,7 @@ var mail=builder.Configuration.GetSection("Mail").Get<MailOptions>()??new MailOp
 var similarity=builder.Configuration.GetSection("Similarity").Get<SimilarityOptions>()??new SimilarityOptions();
 if(builder.Environment.IsProduction() && options.DemoData)throw new InvalidOperationException("Demo accounts are only available in Development. Set Platform__DemoData=false before a production start.");
 if(!Uri.TryCreate(options.PublicUrl,UriKind.Absolute,out var publicUrl) || (publicUrl.Scheme!="http" && publicUrl.Scheme!="https"))throw new InvalidOperationException("Platform:PublicUrl must be an absolute HTTP or HTTPS URL.");
+if(options.UseHttpsProxy && publicUrl.Scheme!="https")throw new InvalidOperationException("Platform:UseHttpsProxy requires an HTTPS public URL.");
 builder.Services.AddSingleton(options);builder.Services.AddSingleton(mail);
 builder.Services.AddSingleton(sp=>new PlatformRuntime(options,builder.Environment.ContentRootPath,builder.Configuration["Bootstrap:AdminPassword"]));
 builder.Services.AddSingleton(similarity);
@@ -70,10 +71,14 @@ builder.Services.AddRateLimiter(o=>
 await using var app=builder.Build();
 app.Services.GetRequiredService<PlatformRuntime>();
 await app.Services.GetRequiredService<SimilarityService>().InitializeAsync();
+// Enable only behind a proxy configured to redirect all public HTTP traffic to HTTPS.
+// The externally configured scheme is authoritative; incoming forwarded headers are not trusted.
+if(options.UseHttpsProxy)app.Use((context,next)=>{context.Request.Scheme="https";return next(context);});
 app.Use(async (context,next)=>
 {
     context.Response.Headers["X-Content-Type-Options"]="nosniff";context.Response.Headers["X-Frame-Options"]="DENY";
     context.Response.Headers["Referrer-Policy"]="no-referrer";
+    context.Response.Headers.CacheControl="no-cache";
     context.Response.Headers["Content-Security-Policy"]="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'";
     if(context.Request.Path.StartsWithSegments("/api"))context.Response.Headers.CacheControl="no-store";
     try{await next(context);}

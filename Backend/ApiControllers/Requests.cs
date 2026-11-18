@@ -11,13 +11,14 @@ public sealed class RegisterRequest
     public string Password { get; set; }
     public string FullName { get; set; }
     public string Department { get; set; }
+    public int? StudyYear { get; set; }
     public string AcademicId { get; set; }
     public string Role { get; set; }
 }
 public sealed class LoginRequest { public string UsernameOrEmail { get; set; } public string Password { get; set; } }
 public sealed class ForgotRequest { public string Email { get; set; } }
 public sealed class ResetRequest { public string Token { get; set; } public string NewPassword { get; set; } }
-public sealed class ProfileRequest { public string FullName { get; set; } public string Department { get; set; } public string Phone { get; set; } public string Bio { get; set; } }
+public sealed class ProfileRequest { public string FullName { get; set; } public string Department { get; set; } public int? StudyYear { get; set; } public string Phone { get; set; } public string Bio { get; set; } }
 public sealed class PasswordRequest { public string CurrentPassword { get; set; } public string NewPassword { get; set; } }
 public sealed class TeamRequest { public string Name { get; set; } public int? MaxMembers { get; set; } public string LeaderStudentId { get; set; } }
 public sealed class InvitationRequest { public string Email { get; set; } public string ProposedRole { get; set; } }
@@ -39,7 +40,15 @@ public sealed class TaskRequest
     public List<string> AssignedStudentIds { get; set; }
 }
 public sealed class TaskStatusRequest { public string Status { get; set; } }
-public sealed class UserUpdateRequest { public bool? IsActive { get; set; } public string Role { get; set; } public string FullName { get; set; } public string Department { get; set; } }
+public sealed class UserUpdateRequest { public bool? IsActive { get; set; } public string Role { get; set; } public string FullName { get; set; } public string Department { get; set; } public int? StudyYear { get; set; } }
+public sealed class StudyCourseRequest
+{
+    public string Name { get; set; }
+    public string DepartmentId { get; set; }
+    public int StudyYear { get; set; }
+    public int Semester { get; set; }
+    public string Description { get; set; }
+}
 public sealed class ReminderRequest { public string Message { get; set; } }
 public sealed class ArchiveRequest { public decimal? Grade { get; set; } public string AcademicYear { get; set; } }
 public sealed class HistoricalProjectRequest

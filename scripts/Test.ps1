@@ -24,8 +24,12 @@ Get-ChildItem -LiteralPath 'Frontend/Scripts' -Filter '*.js' -File | ForEach-Obj
     if ($LASTEXITCODE -ne 0) { throw "JavaScript syntax failed: $($_.Name)" }
 }
 $previousTestApplication = $env:GRADUATION_APP_DLL
+& node tests/registration.test.mjs
+if ($LASTEXITCODE -ne 0) { throw 'Registration regression tests failed.' }
 try {
     $env:GRADUATION_APP_DLL = $testApplicationPath
+    & node tests/hosting.test.mjs
+    if ($LASTEXITCODE -ne 0) { throw 'HTTPS proxy hosting tests failed.' }
     & node tests/api.test.mjs
     if ($LASTEXITCODE -ne 0) { throw 'API acceptance tests failed.' }
     if ($Browser) {

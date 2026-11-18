@@ -22,13 +22,18 @@ public static class ApiServer
         var api=app.MapGroup("/api");
         api.MapGet("/health",(SimilarityService analysis)=>Results.Json(new {isSuccess=true,data=new {status="healthy",version="3.0.0",database="SQLite",similarity=analysis.Health}}));
         AuthApi.Map(api);
+        api.MapGet("/study/catalog",(PlatformRuntime r)=>Json(r.ReadJson(rt=>rt.StudyCatalog())));
         var secured=api.MapGroup("").RequireAuthorization();
         TeamApi.Map(secured);IdeaApi.Map(secured);TrackingApi.Map(secured);CollegeAdministrationApi.Map(secured);SupervisorApi.Map(secured);
+        StudyApi.Map(secured);
         secured.MapGet("/settings",(HttpContext c,PlatformRuntime r)=>Query(c,r,(rt,u)=>new {rt.Options.MaxTeamMembers,rt.Options.MaxSupervisorTeams,rt.Options.MaxUploadMegabytes}));
         secured.MapGet("/profile",(HttpContext c,PlatformRuntime r)=>Query(c,r,(rt,u)=>PlatformRuntime.UserView(u)));
         secured.MapPatch("/profile",(ProfileRequest request,HttpContext c,PlatformRuntime r)=>Change(c,r,"profile.update",ActorId(c),(rt,u)=>
         {
-            PlatformRuntime.Require(rt.Auth.UpdateProfile(u.Id,Input.Text(request.FullName,"الاسم الكامل",100),Input.Text(request.Department,"القسم",100),Input.Text(request.Phone,"الهاتف",30,false),Input.Text(request.Bio,"نبذة",2000,false)));
+            string department = u.Role == UserRoleType.Student ? rt.ValidateStudyDepartment(request.Department) : Input.Text(request.Department,"القسم",100);
+            int? studyYear = u.Role == UserRoleType.Student ? PlatformRuntime.ValidateStudyYear(request.StudyYear ?? u.Profile.StudyYear) : null;
+            PlatformRuntime.Require(rt.Auth.UpdateProfile(u.Id,Input.Text(request.FullName,"الاسم الكامل",100),department,Input.Text(request.Phone,"الهاتف",30,false),Input.Text(request.Bio,"نبذة",2000,false)));
+            u.Profile.StudyYear = studyYear;
             rt.SynchronizeProfile(u);
             return PlatformRuntime.UserView(u);
         }));

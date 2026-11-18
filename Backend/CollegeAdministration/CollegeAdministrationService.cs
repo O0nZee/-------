@@ -23,8 +23,14 @@ public sealed partial class PlatformRuntime
         if(role!=user.Role && team!=null) throw new PlatformException("انقل عضوية الطالب من الفريق قبل تغيير دوره");
         if((!active || role!=UserRoleType.Supervisor) && supervisor?.ActiveTeamsCount>0) throw new PlatformException("انقل فرق المشرف قبل تعطيل حسابه أو تغيير دوره");
         if(!active && team?.LeaderStudentId==id && !team.IsArchived) throw new PlatformException("انقل قيادة الفريق قبل تعطيل حساب قائده");
+        string department = request.Department == null ? user.Profile.Department :
+            role == UserRoleType.Student ? ValidateStudyDepartment(request.Department) : Input.Text(request.Department,"القسم",100);
+        int? studyYear = role == UserRoleType.Student ? request.StudyYear ?? user.Profile.StudyYear : null;
+        if (studyYear != null) ValidateStudyYear(studyYear);
+        if (role == UserRoleType.Student && role != user.Role) { department = ValidateStudyDepartment(department); studyYear = ValidateStudyYear(studyYear); }
         Require(Auth.SetAccountState(id,active,role));
-        Require(Auth.UpdateProfile(id,request.FullName==null?null:Input.Text(request.FullName,"الاسم الكامل",100),request.Department==null?null:Input.Text(request.Department,"القسم",100),null,null));
+        Require(Auth.UpdateProfile(id,request.FullName==null?null:Input.Text(request.FullName,"الاسم الكامل",100),department,null,null));
+        user.Profile.StudyYear = studyYear;
         if(role==UserRoleType.Supervisor && supervisor==null) Require(Teams.RegisterSupervisor(id,user.Profile.FullName,"د.",user.Profile.Department,"",Options.MaxSupervisorTeams));
         SynchronizeProfile(user);
         return UserView(user);

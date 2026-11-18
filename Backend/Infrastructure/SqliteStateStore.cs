@@ -6,7 +6,7 @@ using Microsoft.Data.Sqlite;
 
 namespace GraduationPlatform.Infrastructure;
 
-public sealed class SqliteStateStore
+public sealed partial class SqliteStateStore
 {
     private readonly string _connectionString;
     public string DataDirectory { get; }
@@ -51,7 +51,8 @@ public sealed class SqliteStateStore
             Supervisors = Read<Supervisor>(db, "supervisors"), SupervisorAssignments = Read<SupervisorAssignment>(db, "supervisor_assignments"),
             Milestones = Read<Milestone>(db, "milestones"), Tasks = Read<TaskItem>(db, "tasks"),
             Submissions = Read<ProjectSubmission>(db, "submissions"), Notifications = Read<PlatformNotification>(db, "notifications"),
-            Mail = Read<MailRecord>(db, "mail_outbox"), Audit = Read<AuditRecord>(db, "audit_log")
+            Mail = Read<MailRecord>(db, "mail_outbox"), Audit = Read<AuditRecord>(db, "audit_log"),
+            StudyCourses = LoadStudyCourses(db), StudyResources = LoadStudyResources(db)
         };
     }
 
@@ -71,7 +72,7 @@ public sealed class SqliteStateStore
         using (var clear = db.CreateCommand())
         {
             clear.Transaction = tx;
-            clear.CommandText = "PRAGMA defer_foreign_keys=ON; DELETE FROM task_assignments; DELETE FROM team_members; DELETE FROM audit_log; DELETE FROM mail_outbox; DELETE FROM notifications; DELETE FROM submissions; DELETE FROM tasks; DELETE FROM milestones; DELETE FROM reviews; DELETE FROM invitations; DELETE FROM supervisor_assignments; DELETE FROM teams; DELETE FROM ideas; DELETE FROM supervisors; DELETE FROM archive; DELETE FROM users;";
+            clear.CommandText = "PRAGMA defer_foreign_keys=ON; DELETE FROM study_resources; DELETE FROM study_courses; DELETE FROM task_assignments; DELETE FROM team_members; DELETE FROM audit_log; DELETE FROM mail_outbox; DELETE FROM notifications; DELETE FROM submissions; DELETE FROM tasks; DELETE FROM milestones; DELETE FROM reviews; DELETE FROM invitations; DELETE FROM supervisor_assignments; DELETE FROM teams; DELETE FROM ideas; DELETE FROM supervisors; DELETE FROM archive; DELETE FROM users;";
             clear.ExecuteNonQuery();
         }
         foreach (var u in state.Users) Insert(db, tx, "users", u.Id, u, ("username",u.Username),("email",u.Email),("role",u.Role.ToString()),("is_active",u.IsActive));
@@ -96,6 +97,7 @@ public sealed class SqliteStateStore
         foreach (var n in state.Notifications) Insert(db, tx, "notifications", n.Id, n, ("user_id",n.UserId),("team_id",n.TeamId),("dedup_key",n.DedupKey));
         foreach (var m in state.Mail) Insert(db, tx, "mail_outbox", m.Id, m, ("status",m.Status),("created_at",m.CreatedAt.ToString("o")));
         foreach (var a in state.Audit) Insert(db, tx, "audit_log", a.Id, a, ("actor_id",a.ActorId),("action",a.Action),("created_at",a.CreatedAt.ToString("o")));
+        WriteStudyLibrary(db, tx, state);
         using (var meta = db.CreateCommand())
         {
             meta.Transaction = tx; meta.CommandText = "INSERT OR IGNORE INTO schema_meta(version) VALUES(1)"; meta.ExecuteNonQuery();

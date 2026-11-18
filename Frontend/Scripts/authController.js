@@ -33,7 +33,8 @@ document.addEventListener('submit', async event => {
         if (form.dataset.authForm === 'login') { const user = await api.login(values.usernameOrEmail.trim(), values.password); location.replace(portalPath(user.role)); }
         else if (form.dataset.authForm === 'register') {
             if (values.password !== values.confirmPassword) throw new ApiError('كلمتا المرور غير متطابقتين.');
-            delete values.confirmPassword; const user = await api.register(values); location.href = portalPath(user.role);
+            delete values.confirmPassword; values.studyYear = Number(values.studyYear);
+            const user = await api.register(values); location.href = portalPath(user.role);
         } else if (form.dataset.authForm === 'forgot') {
             await api.request('/auth/forgot-password', { method: 'POST', body: { email: values.email } });
             showAuthMessage('إذا كان البريد مسجلًا ونشطًا، سيتم إرسال رابط استعادة كلمة المرور.');
@@ -50,6 +51,15 @@ document.addEventListener('submit', async event => {
         document.getElementById('authForms').hidden = true;
         document.getElementById('localEntryPanel').hidden = false;
         return;
+    }
+    try {
+        const catalog = await api.request('/study/catalog');
+        const department = document.getElementById('registerDepartment'), year = document.getElementById('registerStudyYear');
+        if (department) department.innerHTML = studyDepartmentOptions(catalog, department.value, false);
+        if (year) year.innerHTML = studyYearOptions(catalog, year.value);
+    } catch (error) {
+        // The rendered registration options remain usable if the catalog refresh fails.
+        console.warn('Registration catalog refresh unavailable');
     }
     try {
         const user = await api.init();

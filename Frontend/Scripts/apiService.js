@@ -51,6 +51,12 @@ const api = new ApiService();
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 const roleLabels = { Student: 'طالب', Supervisor: 'مشرف أكاديمي', Admin: 'إدارة الكلية' };
 const portalPath = role => ({ Student: '/student', Supervisor: '/supervisor', Admin: '/admin' }[role] || '/');
+const studyDepartmentOptions = (catalog, selected = '', useIds = false) => '<option value="">اختر القسم</option>' + catalog.departments.map(d => {
+    const value = useIds ? d.id : d.name;
+    return `<option value="${escapeHtml(value)}" ${selected === value ? 'selected' : ''}>${escapeHtml(d.name)}</option>`;
+}).join('');
+const studyYearOptions = (catalog, selected = '') => '<option value="">اختر الفرقة</option>' + catalog.years.map(y => `<option value="${y.value}" ${Number(selected) === y.value ? 'selected' : ''}>${escapeHtml(y.name)}</option>`).join('');
+const studyYearLabel = year => ({ 1: 'الفرقة الأولى', 2: 'الفرقة الثانية', 3: 'الفرقة الثالثة', 4: 'الفرقة الرابعة' }[year] || 'اختَر فرقتك');
 const formatDate = value => value ? new Intl.DateTimeFormat('ar-EG', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Africa/Cairo' }).format(new Date(value)) : '—';
 const formatNumber = value => new Intl.NumberFormat('ar-EG', { maximumFractionDigits: 1 }).format(Number(value) || 0);
 const formValues = form => Object.fromEntries(new FormData(form).entries());

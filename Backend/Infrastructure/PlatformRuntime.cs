@@ -36,6 +36,7 @@ public sealed partial class PlatformRuntime : IDisposable
         try
         {
             Store = new SqliteStateStore(directory);
+            StudyDepartments = Store.LoadStudyDepartments();
             Directory.CreateDirectory(UploadDirectory);
             if (Store.IsInitialized) Restore(Store.Load());
             else
@@ -90,7 +91,8 @@ public sealed partial class PlatformRuntime : IDisposable
     {
         Users=Auth.ExportUsers(), Ideas=Ideas.ExportIdeas(), Archive=Ideas.ExportArchive(), Reviews=Ideas.ExportReviews(),
         Teams=Teams.GetAllTeams(), Invitations=Teams.ExportInvitations(), Supervisors=Teams.GetAllSupervisors(), SupervisorAssignments=Teams.ExportAssignments(),
-        Milestones=Tracking.ExportMilestones(), Tasks=Tracking.ExportTasks(), Submissions=Submissions, Notifications=Notifications, Mail=Mail, Audit=Audit
+        Milestones=Tracking.ExportMilestones(), Tasks=Tracking.ExportTasks(), Submissions=Submissions, Notifications=Notifications, Mail=Mail, Audit=Audit,
+        StudyCourses=StudyCourses, StudyResources=StudyResources
     };
 
     private void Restore(PlatformSnapshot state)
@@ -99,6 +101,7 @@ public sealed partial class PlatformRuntime : IDisposable
         Teams.ImportState(state.Teams,state.Invitations,state.Supervisors,state.SupervisorAssignments);
         Tracking.ImportState(state.Milestones,state.Tasks);
         Submissions=state.Submissions; Notifications=state.Notifications; Mail=state.Mail; Audit=state.Audit;
+        StudyCourses=state.StudyCourses; StudyResources=state.StudyResources;
     }
 
     private void Seed(string adminPassword)

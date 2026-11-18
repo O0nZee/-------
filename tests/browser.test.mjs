@@ -89,8 +89,13 @@ async function test(name, runTest) { await runTest(); passed++; process.stdout.w
 async function createAccount(admin, username, fullName, role) {
     await admin.locator('[data-action="create-user"]').click();
     const form = admin.locator('[data-form="user-create"]');
-    for (const [name, value] of Object.entries({ fullName, username, email: username + '@browser.local', password, department: 'علوم الحاسب' })) await form.locator(`[name="${name}"]`).fill(value);
-    await form.locator('[name="role"]').selectOption(role); await submit(admin, 'user-create', '/admin/users');
+    for (const [name, value] of Object.entries({ fullName, username, email: username + '@browser.local', password })) await form.locator(`[name="${name}"]`).fill(value);
+    await form.locator('[name="role"]').selectOption(role);
+    if (role === 'Student') {
+        await form.locator('[data-student-fields] [name="department"]').selectOption('حاسب آلي');
+        await form.locator('[name="studyYear"]').selectOption('2');
+    } else await form.locator('[data-staff-fields] [name="department"]').fill('علوم الحاسب');
+    await submit(admin, 'user-create', '/admin/users');
     await admin.locator('#usersTable tr').filter({ hasText: username }).waitFor({ state: 'visible' });
 }
 
@@ -114,10 +119,14 @@ try {
         assert(await student.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
         await student.setViewportSize({ width: 1440, height: 1000 });
         await student.locator('[data-auth-tab="register"]').click(); const form = student.locator('#registerForm');
-        for (const [name, value] of Object.entries({ fullName: 'ليلى اختبار', username: accounts.student, email: accounts.student + '@browser.local', department: 'علوم الحاسب', academicId: 'UI-001', password, confirmPassword: 'MismatchingPassword!' })) await form.locator(`[name="${name}"]`).fill(value);
+        for (const [name, value] of Object.entries({ fullName: 'ليلى اختبار', username: accounts.student, email: accounts.student + '@browser.local', academicId: 'UI-001', password, confirmPassword: 'MismatchingPassword!' })) await form.locator(`[name="${name}"]`).fill(value);
+        await form.locator('[name="department"]').selectOption('حاسب آلي');
+        await form.locator('[name="studyYear"]').selectOption('2');
+        assert.equal(await form.locator('[name="department"] option').count(), 9);
+        assert.equal(await form.locator('[name="studyYear"] option').count(), 5);
         await form.locator('[type="submit"]').click(); await student.locator('#authMessage.error').waitFor({ state: 'visible' });
         await form.locator('[name="confirmPassword"]').fill(password); await form.locator('[type="submit"]').click();
-        await student.waitForURL(base + '/student#overview'); await student.locator('#pageTitle').waitFor({ state: 'visible' }); await idle(student);
+        await student.waitForURL(base + '/student#courses'); await student.locator('#pageTitle').waitFor({ state: 'visible' }); await idle(student);
         assert.equal((await read(student, '/profile')).role, 'Student');
     });
     await test('All login aliases open the username and password form and protect private portals', async () => {
@@ -140,17 +149,56 @@ try {
         await createAccount(admin, accounts.member, 'عمر اختبار', 'Student'); await createAccount(admin, accounts.supervisor, 'د. سارة اختبار', 'Supervisor');
         const users = await read(admin, '/admin/users'); assert.equal(users.length, 4);
     });
+    await test('Administrators add academic courses and files and students see their own department and year', async () => {
+        await section(admin, 'courses');
+        for (const departmentId of ['computer-ar', 'media']) {
+            await admin.locator('[data-action="study-course-create"]').click();
+            const form = admin.locator('[data-form="study-course"]');
+            await form.locator('[name="name"]').fill(departmentId === 'computer-ar' ? 'قواعد البيانات' : 'أساسيات الإعلام');
+            await form.locator('[name="departmentId"]').selectOption(departmentId);
+            await form.locator('[name="studyYear"]').selectOption('2');
+            await form.locator('[name="description"]').fill('مادة اختبار <img src=x onerror="window.__xss=1">');
+            await submit(admin, 'study-course', '/admin/study/courses');
+        }
+        const course = (await read(admin, '/study/library')).courses.find(c => c.departmentId === 'computer-ar');
+        for (const kind of ['Material', 'Summary', 'Exam']) {
+            await admin.locator(`[data-action="study-resource-add"][data-id="${course.id}"][data-kind="${kind}"]`).click();
+            const form = admin.locator('[data-form="study-resource"]');
+            await form.locator('[name="title"]').fill(kind === 'Summary' ? 'ملخص قواعد البيانات' : kind === 'Exam' ? 'امتحان قواعد البيانات السابق' : 'محاضرة قواعد البيانات');
+            if (kind === 'Exam') await form.locator('[name="examYear"]').fill('2025-2026');
+            await form.locator('[name="file"]').setInputFiles({ name: kind + '.txt', mimeType: 'text/plain', buffer: Buffer.from('Academic content ' + kind) });
+            await submit(admin, 'study-resource', '/admin/study/resources');
+        }
+        await section(student, 'courses');
+        assert.equal(await student.locator('[data-course-id]').count(), 1);
+        assert((await student.locator('.study-welcome').innerText()).includes('حاسب آلي · الفرقة الثانية'));
+        assert.equal(await student.locator('.sidebar').count(), 0);
+        const position = await student.evaluate(() => ({ nav: document.querySelector('.top-navigation').getBoundingClientRect().bottom, content: document.querySelector('.workspace').getBoundingClientRect().top }));
+        assert(position.nav <= position.content + 1, 'The navigation appears above the workspace');
+        await screenshot(student, 'student-courses-desktop');
+        await section(student, 'summaries');
+        assert.equal(await student.locator('.study-resource-list li').count(), 1);
+        assert((await student.locator('#content').innerText()).includes('ملخص قواعد البيانات'));
+        await section(student, 'exams');
+        assert((await student.locator('.study-resource-list').innerText()).includes('2025-2026'));
+        const download = student.waitForEvent('download'); await student.locator('.study-resource-list a[download]').click();
+        assert.equal((await download).suggestedFilename(), 'Exam.txt');
+        await student.setViewportSize({ width: 390, height: 844 }); await section(student, 'summaries');
+        await student.evaluate(() => scrollTo(0, 0)); await screenshot(student, 'student-summaries-mobile');
+        assert(await student.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+        await student.setViewportSize({ width: 1440, height: 1000 });
+    });
     await test('An unassigned supervisor can refresh an empty overview', async () => {
         await login(supervisor, accounts.supervisor); await supervisor.getByRole('button', { name: 'تحديث الفرق', exact: true }).click();
         await idle(supervisor); assert.equal(new URL(supervisor.url()).hash, '#overview');
     });
     await test('Existing student, supervisor, and administrator sessions return to their own portals', async () => {
         for (const [page, role, portal] of [[student, 'Student', '/student'], [supervisor, 'Supervisor', '/supervisor'], [admin, 'Admin', '/admin']]) {
-            await page.goto(base + '/login'); await page.waitForURL(base + portal + '#overview');
+            await page.goto(base + '/login'); await page.waitForURL(base + portal + (role === 'Student' ? '#courses' : '#overview'));
             await page.locator('#pageTitle').waitFor({ state: 'visible' }); await idle(page);
             assert.equal(await page.locator('body').getAttribute('data-role'), role);
         }
-        await student.goto(base + '/admin'); await student.waitForURL(base + '/student#overview');
+        await student.goto(base + '/admin'); await student.waitForURL(base + '/student#courses');
         await student.locator('#pageTitle').waitFor({ state: 'visible' }); await idle(student);
         assert.equal(await student.locator('body').getAttribute('data-role'), 'Student');
     });
@@ -161,7 +209,7 @@ try {
         await submit(student, 'invite', `/teams/${team.id}/invitations`); details = await read(student, '/teams/' + team.id); assert.equal(details.milestones.length, 4);
     });
     await test('Invitation acceptance joins the colleague to the same persisted team', async () => {
-        await login(member, accounts.member); const invitation = (await read(member, '/invitations'))[0];
+        await login(member, accounts.member); await section(member, 'overview'); const invitation = (await read(member, '/invitations'))[0];
         await action(member, member.locator(`[data-action="respond-invitation"][data-id="${invitation.id}"][data-accept="true"]`), `/invitations/${invitation.id}/respond`);
         await member.locator('#teamSelect').waitFor({ state: 'visible' }); details = await read(member, '/teams/' + team.id); assert.equal(details.team.members.length, 2);
     });
@@ -330,7 +378,7 @@ try {
         await admin.locator('a[href="/api/reports/export"]').click(); const download = await downloadEvent;
         const csv = await fs.readFile(await download.path(), 'utf8'); assert(csv.includes('92.5')); assert(csv.includes('فريق المياه & القياس'));
         await screenshot(admin, 'admin-reports-desktop'); await admin.emulateMedia({ media: 'print' });
-        assert.equal(await admin.locator('.sidebar').isVisible(), false); await screenshot(admin, 'report-print');
+        assert.equal(await admin.locator('.top-navigation').isVisible(), false); await screenshot(admin, 'report-print');
         const pdf = await admin.pdf({ path: path.join(outputDirectory, 'report.pdf'), format: 'A4', landscape: true, printBackground: true });
         assert.equal(pdf.subarray(0, 4).toString(), '%PDF'); assert(pdf.length > 1000); await admin.emulateMedia({ media: 'screen' });
     });

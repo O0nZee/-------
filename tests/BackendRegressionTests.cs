@@ -345,7 +345,7 @@ public static class BackendRegressionTests
         {
             var columns = new List<string>();
             while (reader.Read()) columns.Add(reader.GetString(0));
-            Assert(columns.SequenceEqual(new[] { "id", "username", "email", "full_name", "department", "phone",
+            Assert(columns.SequenceEqual(new[] { "id", "username", "email", "full_name", "department", "study_year", "phone",
                 "academic_identifier", "bio", "is_active", "created_at", "updated_at" }), "Only profile fields are exposed");
         }
         command.CommandText = "PRAGMA integrity_check";

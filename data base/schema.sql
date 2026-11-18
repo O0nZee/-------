@@ -27,13 +27,15 @@ CREATE INDEX IF NOT EXISTS idx_mail_status ON mail_outbox(status);
 -- Student profiles come from the same saved accounts used by registration/login.
 -- This view stays current when a student registers or updates their profile.
 -- Authentication hashes, salts and reset tokens are intentionally omitted.
-CREATE VIEW IF NOT EXISTS students AS
+DROP VIEW IF EXISTS students;
+CREATE VIEW students AS
 SELECT
     id,
     username,
     email,
     json_extract(payload, '$.profile.fullName') AS full_name,
     json_extract(payload, '$.profile.department') AS department,
+    json_extract(payload, '$.profile.studyYear') AS study_year,
     json_extract(payload, '$.profile.phone') AS phone,
     json_extract(payload, '$.profile.academicIdentifier') AS academic_identifier,
     json_extract(payload, '$.profile.bio') AS bio,
@@ -42,3 +44,39 @@ SELECT
     json_extract(payload, '$.profile.updatedAt') AS updated_at
 FROM users
 WHERE role = 'Student';
+
+-- Academic content is linked to a department, study year and course.
+CREATE TABLE IF NOT EXISTS study_departments(id TEXT PRIMARY KEY,name TEXT NOT NULL UNIQUE);
+INSERT OR IGNORE INTO study_departments(id,name) VALUES
+('computer-en','حاسب آلي إنجليزي'),
+('computer-ar','حاسب آلي'),
+('special-needs-tech','تكنولوجيا ذوي الاحتياجات الخاصة'),
+('technology','تكنولوجيا'),
+('theatre','مسرح'),
+('media','إعلام'),
+('art','فنية'),
+('music','موسيقى');
+CREATE TABLE IF NOT EXISTS study_courses(
+    id TEXT PRIMARY KEY,
+    department_id TEXT NOT NULL REFERENCES study_departments(id),
+    study_year INTEGER NOT NULL CHECK(study_year BETWEEN 1 AND 4),
+    semester INTEGER NOT NULL CHECK(semester IN (1,2)),
+    name TEXT NOT NULL COLLATE NOCASE,
+    description TEXT NOT NULL DEFAULT '',
+    UNIQUE(department_id,study_year,semester,name)
+);
+CREATE TABLE IF NOT EXISTS study_resources(
+    id TEXT PRIMARY KEY,
+    course_id TEXT NOT NULL REFERENCES study_courses(id) DEFERRABLE INITIALLY DEFERRED,
+    kind TEXT NOT NULL CHECK(kind IN ('Material','Summary','Exam')),
+    title TEXT NOT NULL,
+    exam_year TEXT NOT NULL DEFAULT '',
+    original_file_name TEXT NOT NULL,
+    content_type TEXT NOT NULL,
+    size_bytes INTEGER NOT NULL CHECK(size_bytes>0),
+    sha256 TEXT NOT NULL,
+    uploaded_by TEXT NOT NULL REFERENCES users(id) DEFERRABLE INITIALLY DEFERRED,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_study_courses_scope ON study_courses(department_id,study_year,semester);
+CREATE INDEX IF NOT EXISTS idx_study_resources_course ON study_resources(course_id,kind);
